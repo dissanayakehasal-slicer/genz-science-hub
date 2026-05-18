@@ -20,6 +20,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminYoutubeRouteImport } from './routes/admin.youtube'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminResultsRouteImport } from './routes/admin.results'
 import { Route as AdminNoticesRouteImport } from './routes/admin.notices'
@@ -83,6 +84,11 @@ const AdminYoutubeRoute = AdminYoutubeRouteImport.update({
   path: '/youtube',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/admin/notices': typeof AdminNoticesRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/admin/notices': typeof AdminNoticesRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/admin/notices': typeof AdminNoticesRoute
   '/admin/results': typeof AdminResultsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/users'
     | '/admin/youtube'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/users'
     | '/admin/youtube'
     | '/admin'
   id:
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/admin/notices'
     | '/admin/results'
     | '/admin/settings'
+    | '/admin/users'
     | '/admin/youtube'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -332,6 +344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminYoutubeRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/settings': {
       id: '/admin/settings'
       path: '/settings'
@@ -392,6 +411,7 @@ interface AdminRouteChildren {
   AdminNoticesRoute: typeof AdminNoticesRoute
   AdminResultsRoute: typeof AdminResultsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AdminYoutubeRoute: typeof AdminYoutubeRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -404,6 +424,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminNoticesRoute: AdminNoticesRoute,
   AdminResultsRoute: AdminResultsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminYoutubeRoute: AdminYoutubeRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
