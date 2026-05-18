@@ -11,7 +11,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const navItems = [
+const navItems: Array<{ to: string; label: string; Icon: any; exact?: boolean }> = [
   { to: "/admin", label: "Dashboard", Icon: LayoutDashboard, exact: true },
   { to: "/admin/notices", label: "Notices", Icon: Bell },
   { to: "/admin/notes", label: "Notes", Icon: FileText },
@@ -21,7 +21,7 @@ const navItems = [
   { to: "/admin/categories", label: "Categories", Icon: Tags },
   { to: "/admin/contact", label: "Contact & Social", Icon: Phone },
   { to: "/admin/settings", label: "Site Settings", Icon: Settings },
-] as const;
+];
 
 function AdminLayout() {
   const nav = useNavigate();
