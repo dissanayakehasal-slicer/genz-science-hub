@@ -47,8 +47,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "GEN_ZCIENCE — Science, but make it Gen Z." },
+      { title: "GEN_ZCIENCE" },
       { name: "description", content: "Premium science classes by Geeth Munasingha (GMS). Notes, lessons, results, and more." },
+      { property: "og:title", content: "GEN_ZCIENCE" },
+      { name: "twitter:title", content: "GEN_ZCIENCE" },
+      { property: "og:description", content: "Premium science classes by Geeth Munasingha (GMS). Notes, lessons, results, and more." },
+      { name: "twitter:description", content: "Premium science classes by Geeth Munasingha (GMS). Notes, lessons, results, and more." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/uzuQU8AxXcTdRxG7BbFP8aLCmkB3/social-images/social-1779114918070-WhatsApp_Image_2026-05-18_at_7.34.54_PM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/uzuQU8AxXcTdRxG7BbFP8aLCmkB3/social-images/social-1779114918070-WhatsApp_Image_2026-05-18_at_7.34.54_PM.webp" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
