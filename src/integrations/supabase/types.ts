@@ -554,7 +554,7 @@ export type Database = {
       recalculate_ranks: { Args: { _exam_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "admin"
+      app_role: "admin" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -682,7 +682,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin"],
+      app_role: ["admin", "super_admin"],
     },
   },
 } as const
