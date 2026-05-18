@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -15,8 +15,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const nav = useNavigate();
   const { session, isAdmin, loading } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -28,17 +27,12 @@ function LoginPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/admin` } });
-        if (error) throw error;
-        toast.success("Account created. Signing you in...");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Welcome back!");
-      }
+      const email = `${username.trim().toLowerCase()}@gmszcience.local`;
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("Welcome back!");
     } catch (e: any) {
-      toast.error(e.message ?? "Authentication failed");
+      toast.error(e.message ?? "Login failed");
     } finally {
       setBusy(false);
     }
@@ -46,24 +40,51 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-hero grid place-items-center p-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md bg-white rounded-3xl shadow-elegant p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-white rounded-3xl shadow-elegant p-8"
+      >
         <div className="flex flex-col items-center mb-6">
           <Logo size={56} />
           <h1 className="mt-4 font-display font-bold text-2xl">Admin Access</h1>
           <p className="text-sm text-[var(--brown)]/70">GEN_ZCIENCE Dashboard</p>
         </div>
         <form onSubmit={submit} className="space-y-3">
-          <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full px-4 py-3 rounded-xl bg-[var(--cream)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none" />
-          <input required type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full px-4 py-3 rounded-xl bg-[var(--cream)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none" />
-          <button disabled={busy} className="w-full bg-gradient-gold text-[var(--brown-deep)] font-semibold py-3 rounded-xl shadow-gold disabled:opacity-60 inline-flex items-center justify-center gap-2">
-            {busy && <Loader2 className="animate-spin" size={16}/>} {mode === "login" ? "Sign in" : "Create account"}
+          <input
+            required
+            autoFocus
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            className="w-full px-4 py-3 rounded-xl bg-[var(--cream)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none"
+          />
+          <input
+            required
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className="w-full px-4 py-3 rounded-xl bg-[var(--cream)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none"
+          />
+          <button
+            disabled={busy}
+            className="w-full bg-gradient-gold text-[var(--brown-deep)] font-semibold py-3 rounded-xl shadow-gold disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          >
+            {busy ? <Loader2 className="animate-spin" size={16} /> : <ShieldCheck size={16} />} Sign in
           </button>
         </form>
-        <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="mt-4 w-full text-sm text-[var(--brown)]/70 hover:text-[var(--brown-deep)]">
-          {mode === "login" ? "First time? Create the admin account →" : "Already have an account? Sign in →"}
-        </button>
-        <Link to="/" className="block mt-4 text-center text-xs text-[var(--brown)]/60 hover:text-[var(--brown-deep)]">← Back to site</Link>
-        <p className="mt-6 text-xs text-[var(--brown)]/60 text-center">The first account created becomes the admin.</p>
+        <Link
+          to="/"
+          className="block mt-4 text-center text-xs text-[var(--brown)]/60 hover:text-[var(--brown-deep)]"
+        >
+          ← Back to site
+        </Link>
+        <p className="mt-6 text-xs text-[var(--brown)]/60 text-center">
+          New admins must be added by a Super Admin from the dashboard.
+        </p>
       </motion.div>
     </div>
   );

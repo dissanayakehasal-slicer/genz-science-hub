@@ -40,7 +40,7 @@ export function Navbar() {
           <Logo size={40} logoUrl={settings?.logo_url} />
           <div className="leading-tight">
             <div className="font-display font-bold text-base tracking-tight">{settings?.website_name ?? "GEN_ZCIENCE"}</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--brown)]">{settings?.teacher_short_name ?? "GSM"}</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--brown)]">{settings?.teacher_short_name ?? "GMS"}</div>
           </div>
         </Link>
 
