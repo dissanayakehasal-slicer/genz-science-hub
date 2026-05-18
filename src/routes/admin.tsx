@@ -27,7 +27,8 @@ const baseNav: Array<{ to: string; label: string; Icon: any; exact?: boolean; su
 
 function AdminLayout() {
   const nav = useNavigate();
-  const { session, isAdmin, loading } = useAuth();
+  const { session, isAdmin, isSuperAdmin, loading } = useAuth();
+  const navItems = baseNav.filter((i) => !i.superOnly || isSuperAdmin);
 
   useEffect(() => {
     if (!loading && (!session || !isAdmin)) nav({ to: "/login" });
