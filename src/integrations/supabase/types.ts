@@ -538,6 +538,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       lookup_result: {
         Args: { _exam_id: string; _index_number: string }
         Returns: {
@@ -554,7 +555,7 @@ export type Database = {
       recalculate_ranks: { Args: { _exam_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "admin"
+      app_role: "admin" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -682,7 +683,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin"],
+      app_role: ["admin", "super_admin"],
     },
   },
 } as const

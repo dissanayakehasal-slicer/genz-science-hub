@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Bell, FileText, Youtube, Image, Trophy, Tags, Settings, Phone, LogOut, Loader2 } from "lucide-react";
+import { LayoutDashboard, Bell, FileText, Youtube, Image, Trophy, Tags, Settings, Phone, LogOut, Loader2, Users } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const navItems: Array<{ to: string; label: string; Icon: any; exact?: boolean }> = [
+const baseNav: Array<{ to: string; label: string; Icon: any; exact?: boolean; superOnly?: boolean }> = [
   { to: "/admin", label: "Dashboard", Icon: LayoutDashboard, exact: true },
   { to: "/admin/notices", label: "Notices", Icon: Bell },
   { to: "/admin/notes", label: "Notes", Icon: FileText },
@@ -21,11 +21,14 @@ const navItems: Array<{ to: string; label: string; Icon: any; exact?: boolean }>
   { to: "/admin/categories", label: "Categories", Icon: Tags },
   { to: "/admin/contact", label: "Contact & Social", Icon: Phone },
   { to: "/admin/settings", label: "Site Settings", Icon: Settings },
+  { to: "/admin/users", label: "Admin Users", Icon: Users },
 ];
+
 
 function AdminLayout() {
   const nav = useNavigate();
-  const { session, isAdmin, loading } = useAuth();
+  const { session, isAdmin, isSuperAdmin, loading } = useAuth();
+  const navItems = baseNav.filter((i) => !i.superOnly || isSuperAdmin);
 
   useEffect(() => {
     if (!loading && (!session || !isAdmin)) nav({ to: "/login" });
