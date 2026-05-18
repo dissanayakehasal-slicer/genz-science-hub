@@ -53,7 +53,7 @@ function AdminLayout() {
         </Link>
         <nav className="flex-1 space-y-1">
           {navItems.map((i) => (
-            <Link key={i.to} to={i.to} activeOptions={{ exact: i.exact }}
+            <Link key={i.to} to={i.to as any} activeOptions={{ exact: i.exact }}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium hover:bg-[var(--gold)]/15 transition-colors"
               activeProps={{ className: "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-gradient-gold text-[var(--brown-deep)] shadow-gold" }}>
               <i.Icon size={18}/> {i.label}
@@ -73,7 +73,7 @@ function AdminLayout() {
         </div>
         <div className="lg:hidden overflow-x-auto bg-white border-b border-[var(--border)] px-2 py-2 flex gap-1 sticky top-[60px] z-20">
           {navItems.map((i) => (
-            <Link key={i.to} to={i.to} activeOptions={{ exact: i.exact }} className="whitespace-nowrap px-3 py-1.5 text-xs rounded-full bg-[var(--cream)]"
+            <Link key={i.to} to={i.to as any} activeOptions={{ exact: i.exact }} className="whitespace-nowrap px-3 py-1.5 text-xs rounded-full bg-[var(--cream)]"
               activeProps={{ className: "whitespace-nowrap px-3 py-1.5 text-xs rounded-full bg-gradient-gold text-[var(--brown-deep)] font-semibold" }}>
               {i.label}
             </Link>

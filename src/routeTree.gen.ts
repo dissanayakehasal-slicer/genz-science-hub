@@ -19,6 +19,14 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminYoutubeRouteImport } from './routes/admin.youtube'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminResultsRouteImport } from './routes/admin.results'
+import { Route as AdminNoticesRouteImport } from './routes/admin.notices'
+import { Route as AdminNotesRouteImport } from './routes/admin.notes'
+import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
+import { Route as AdminContactRouteImport } from './routes/admin.contact'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 
 const YoutubeRoute = YoutubeRouteImport.update({
   id: '/youtube',
@@ -70,6 +78,46 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminYoutubeRoute = AdminYoutubeRouteImport.update({
+  id: '/youtube',
+  path: '/youtube',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminResultsRoute = AdminResultsRouteImport.update({
+  id: '/results',
+  path: '/results',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNoticesRoute = AdminNoticesRouteImport.update({
+  id: '/notices',
+  path: '/notices',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotesRoute = AdminNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGalleryRoute = AdminGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContactRoute = AdminContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +129,14 @@ export interface FileRoutesByFullPath {
   '/notices': typeof NoticesRoute
   '/results': typeof ResultsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/contact': typeof AdminContactRoute
+  '/admin/gallery': typeof AdminGalleryRoute
+  '/admin/notes': typeof AdminNotesRoute
+  '/admin/notices': typeof AdminNoticesRoute
+  '/admin/results': typeof AdminResultsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/youtube': typeof AdminYoutubeRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -92,6 +148,14 @@ export interface FileRoutesByTo {
   '/notices': typeof NoticesRoute
   '/results': typeof ResultsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/contact': typeof AdminContactRoute
+  '/admin/gallery': typeof AdminGalleryRoute
+  '/admin/notes': typeof AdminNotesRoute
+  '/admin/notices': typeof AdminNoticesRoute
+  '/admin/results': typeof AdminResultsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/youtube': typeof AdminYoutubeRoute
   '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
@@ -105,6 +169,14 @@ export interface FileRoutesById {
   '/notices': typeof NoticesRoute
   '/results': typeof ResultsRoute
   '/youtube': typeof YoutubeRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/contact': typeof AdminContactRoute
+  '/admin/gallery': typeof AdminGalleryRoute
+  '/admin/notes': typeof AdminNotesRoute
+  '/admin/notices': typeof AdminNoticesRoute
+  '/admin/results': typeof AdminResultsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/youtube': typeof AdminYoutubeRoute
   '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -119,6 +191,14 @@ export interface FileRouteTypes {
     | '/notices'
     | '/results'
     | '/youtube'
+    | '/admin/categories'
+    | '/admin/contact'
+    | '/admin/gallery'
+    | '/admin/notes'
+    | '/admin/notices'
+    | '/admin/results'
+    | '/admin/settings'
+    | '/admin/youtube'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -130,6 +210,14 @@ export interface FileRouteTypes {
     | '/notices'
     | '/results'
     | '/youtube'
+    | '/admin/categories'
+    | '/admin/contact'
+    | '/admin/gallery'
+    | '/admin/notes'
+    | '/admin/notices'
+    | '/admin/results'
+    | '/admin/settings'
+    | '/admin/youtube'
     | '/admin'
   id:
     | '__root__'
@@ -142,6 +230,14 @@ export interface FileRouteTypes {
     | '/notices'
     | '/results'
     | '/youtube'
+    | '/admin/categories'
+    | '/admin/contact'
+    | '/admin/gallery'
+    | '/admin/notes'
+    | '/admin/notices'
+    | '/admin/results'
+    | '/admin/settings'
+    | '/admin/youtube'
     | '/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -229,14 +325,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/youtube': {
+      id: '/admin/youtube'
+      path: '/youtube'
+      fullPath: '/admin/youtube'
+      preLoaderRoute: typeof AdminYoutubeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/results': {
+      id: '/admin/results'
+      path: '/results'
+      fullPath: '/admin/results'
+      preLoaderRoute: typeof AdminResultsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notices': {
+      id: '/admin/notices'
+      path: '/notices'
+      fullPath: '/admin/notices'
+      preLoaderRoute: typeof AdminNoticesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notes': {
+      id: '/admin/notes'
+      path: '/notes'
+      fullPath: '/admin/notes'
+      preLoaderRoute: typeof AdminNotesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gallery': {
+      id: '/admin/gallery'
+      path: '/gallery'
+      fullPath: '/admin/gallery'
+      preLoaderRoute: typeof AdminGalleryRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contact': {
+      id: '/admin/contact'
+      path: '/contact'
+      fullPath: '/admin/contact'
+      preLoaderRoute: typeof AdminContactRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminContactRoute: typeof AdminContactRoute
+  AdminGalleryRoute: typeof AdminGalleryRoute
+  AdminNotesRoute: typeof AdminNotesRoute
+  AdminNoticesRoute: typeof AdminNoticesRoute
+  AdminResultsRoute: typeof AdminResultsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminYoutubeRoute: typeof AdminYoutubeRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminContactRoute: AdminContactRoute,
+  AdminGalleryRoute: AdminGalleryRoute,
+  AdminNotesRoute: AdminNotesRoute,
+  AdminNoticesRoute: AdminNoticesRoute,
+  AdminResultsRoute: AdminResultsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminYoutubeRoute: AdminYoutubeRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -256,3 +424,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
