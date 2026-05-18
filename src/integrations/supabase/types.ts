@@ -538,6 +538,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       lookup_result: {
         Args: { _exam_id: string; _index_number: string }
         Returns: {
