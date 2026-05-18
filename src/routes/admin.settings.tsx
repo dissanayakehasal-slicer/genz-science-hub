@@ -62,7 +62,7 @@ function SettingsAdmin() {
         {F("hero_title", "Hero Title")}
         {F("hero_description", "Hero Description", "textarea")}
         {F("teacher_name", "Teacher Name")}
-        {F("teacher_short_name", "Teacher Short Name (GSM)")}
+        {F("teacher_short_name", "Teacher Short Name (GMS)")}
         <div className="md:col-span-2">{F("teacher_bio", "Teacher Bio", "textarea")}</div>
         <div className="md:col-span-2">{F("class_description", "Class Description", "textarea")}</div>
         {F("footer_text", "Footer Text")}
@@ -73,7 +73,7 @@ function SettingsAdmin() {
           <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], "teacher-photos", "teacher_photo_url")} />
         </div>
         <div>
-          <label className="text-xs uppercase tracking-widest text-[var(--brown)]/60 font-semibold mb-1 block">Logo (GSM)</label>
+          <label className="text-xs uppercase tracking-widest text-[var(--brown)]/60 font-semibold mb-1 block">Logo (GMS)</label>
           {form.logo_url && <img src={form.logo_url} alt="" className="w-16 h-16 rounded-xl object-cover mb-2" />}
           <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], "logos", "logo_url")} />
         </div>
