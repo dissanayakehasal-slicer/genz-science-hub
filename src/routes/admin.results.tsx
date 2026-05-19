@@ -36,7 +36,7 @@ function ResultsAdmin() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin_exams"] });
 
-  const saveExam = async () => {
+  const handleSaveExam = async () => {
     if (!examEdit?.exam_name) return toast.error("Name required");
     try {
       await saveExamFn({
@@ -93,7 +93,7 @@ function ResultsAdmin() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!examEdit.is_published} onChange={(e) => setExamEdit({ ...examEdit, is_published: e.target.checked })}/> Published</label>
             <textarea rows={2} className="input md:col-span-2" placeholder="Description" value={examEdit.description ?? ""} onChange={(e) => setExamEdit({ ...examEdit, description: e.target.value })}/>
           </div>
-          <button onClick={saveExam} className="mt-4 bg-gradient-gold text-[var(--brown-deep)] font-semibold px-5 py-2.5 rounded-xl shadow-gold">Save</button>
+          <button onClick={handleSaveExam} className="mt-4 bg-gradient-gold text-[var(--brown-deep)] font-semibold px-5 py-2.5 rounded-xl shadow-gold">Save</button>
         </div>
       )}
 
