@@ -25,6 +25,7 @@ function SettingsAdmin() {
       website_name: form.website_name, tagline: form.tagline, hero_title: form.hero_title,
       hero_description: form.hero_description, teacher_name: form.teacher_name,
       teacher_short_name: form.teacher_short_name, teacher_bio: form.teacher_bio,
+      teacher_slogan: form.teacher_slogan,
       teacher_photo_url: form.teacher_photo_url, class_description: form.class_description,
       logo_url: form.logo_url, banner_url: form.banner_url, footer_text: form.footer_text,
     }).eq("id", form.id);
