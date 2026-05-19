@@ -1,13 +1,19 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { LayoutDashboard, Bell, FileText, Youtube, Image, Trophy, Tags, Settings, Phone, LogOut, Loader2, Users } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: ({ context }) => {
+    const roles = context.session?.user?.roles ?? [];
+    const isAdmin = roles.includes("admin") || roles.includes("super_admin");
+    if (!context.session?.user || !isAdmin) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: AdminLayout,
 });
 
@@ -38,10 +44,9 @@ function AdminLayout() {
     return <div className="min-h-screen grid place-items-center"><Loader2 className="animate-spin text-[var(--gold)]" size={32}/></div>;
   }
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  const signOut = () => {
     toast.success("Signed out");
-    nav({ to: "/login" });
+    window.location.href = "/api/auth/signout?callbackUrl=/login";
   };
 
   return (

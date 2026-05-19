@@ -7,9 +7,19 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import type { Session } from "@auth/core/types";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchAuthSession, mintSupabaseAccessToken } from "@/lib/auth-session";
 
 import appCss from "../styles.css?url";
+
+export type RootRouterContext = {
+  queryClient: QueryClient;
+  session: (Session & { user: { id: string; name: string; roles: string[] } }) | null;
+  sessionLoading: boolean;
+};
 
 function NotFoundComponent() {
   return (
@@ -42,7 +52,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+export const Route = createRootRouteWithContext<RootRouterContext>()({
+  beforeLoad: async () => {
+    const session = await fetchAuthSession();
+    return { session, sessionLoading: false };
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -81,7 +95,23 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
+  const { queryClient, session } = Route.useRouteContext();
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      void supabase.auth.signOut();
+      return;
+    }
+    void mintSupabaseAccessToken().then((result) => {
+      if (result?.access_token) {
+        void supabase.auth.setSession({
+          access_token: result.access_token,
+          refresh_token: result.access_token,
+        });
+      }
+    });
+  }, [session?.user?.id]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
