@@ -5,6 +5,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type AppRole = "admin" | "super_admin";
 
+/** Stable ID for env-only admin (must match a row in user_roles if using Supabase data). */
+const ENV_ADMIN_USER_ID =
+  process.env.ADMIN_USER_ID ?? "a0000000-0000-4000-8000-000000000001";
+
 declare module "@auth/core/types" {
   interface User {
     roles?: AppRole[];
@@ -18,6 +22,18 @@ declare module "@auth/core/types" {
   }
 }
 
+function authorizeFromEnv(username: string, password: string) {
+  const envUser = process.env.ADMIN_USERNAME?.trim().toLowerCase();
+  const envPass = process.env.ADMIN_PASSWORD;
+  if (!envUser || !envPass) return null;
+  if (username !== envUser || password !== envPass) return null;
+  return {
+    id: ENV_ADMIN_USER_ID,
+    name: envUser,
+    roles: ["super_admin"] as AppRole[],
+  };
+}
+
 async function loadRoles(userId: string): Promise<AppRole[]> {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
@@ -27,6 +43,32 @@ async function loadRoles(userId: string): Promise<AppRole[]> {
   return (data ?? [])
     .map((r) => r.role as AppRole)
     .filter((r) => r === "admin" || r === "super_admin");
+}
+
+async function authorizeFromDatabase(username: string, password: string) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+
+  const { data: user, error } = await supabaseAdmin
+    .from("app_auth_users")
+    .select("id, username, password_hash")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (error || !user) return null;
+
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) return null;
+
+  const roles = await loadRoles(user.id);
+  if (!roles.includes("admin") && !roles.includes("super_admin")) {
+    return null;
+  }
+
+  return {
+    id: user.id,
+    name: user.username,
+    roles,
+  };
 }
 
 export const authConfig: StartAuthJSConfig = {
@@ -48,27 +90,11 @@ export const authConfig: StartAuthJSConfig = {
         const password = credentials?.password?.toString();
         if (!username || !password) return null;
 
-        const { data: user, error } = await supabaseAdmin
-          .from("app_auth_users")
-          .select("id, username, password_hash")
-          .eq("username", username)
-          .maybeSingle();
+        // Works without Supabase dashboard (set on Vercel only).
+        const envUser = authorizeFromEnv(username, password);
+        if (envUser) return envUser;
 
-        if (error || !user) return null;
-
-        const valid = await bcrypt.compare(password, user.password_hash);
-        if (!valid) return null;
-
-        const roles = await loadRoles(user.id);
-        if (!roles.includes("admin") && !roles.includes("super_admin")) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.username,
-          roles,
-        };
+        return authorizeFromDatabase(username, password);
       },
     }),
   ],

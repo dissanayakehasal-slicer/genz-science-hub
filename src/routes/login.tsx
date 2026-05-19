@@ -92,8 +92,9 @@ function LoginPage() {
           ← Back to site
         </Link>
         <p className="mt-6 text-xs text-[var(--brown)]/60 text-center">
-          Secured with Auth.js on Vercel. Default user: <strong>hasal</strong> (run{" "}
-          <code className="text-[10px]">npm run bootstrap-admin</code> once).
+          Admin login uses Auth.js. If you cannot access the Lovable Supabase project, set{" "}
+          <code className="text-[10px]">ADMIN_USERNAME</code> and{" "}
+          <code className="text-[10px]">ADMIN_PASSWORD</code> on Vercel.
         </p>
       </div>
     </motion.div>
