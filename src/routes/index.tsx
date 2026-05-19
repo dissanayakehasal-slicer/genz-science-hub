@@ -26,15 +26,18 @@ function HomePage() {
   const { data: settings } = useSiteSettings();
   const { data: latestNotice } = useQuery({
     queryKey: ["latest-notice"],
-    queryFn: async () => (await supabase.from("notices").select("*").order("publish_date", { ascending: false }).limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("notices").select("title,publish_date").order("publish_date", { ascending: false }).limit(1).maybeSingle()).data,
+    staleTime: 5 * 60 * 1000,
   });
   const { data: latestExam } = useQuery({
     queryKey: ["latest-exam"],
-    queryFn: async () => (await supabase.from("exams").select("*").eq("is_published", true).order("exam_date", { ascending: false }).limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("exams").select("exam_name,exam_date").eq("is_published", true).order("exam_date", { ascending: false }).limit(1).maybeSingle()).data,
+    staleTime: 5 * 60 * 1000,
   });
   const { data: featuredLesson } = useQuery({
     queryKey: ["featured-lesson"],
-    queryFn: async () => (await supabase.from("youtube_lessons").select("*").eq("is_featured", true).limit(1).maybeSingle()).data,
+    queryFn: async () => (await supabase.from("youtube_lessons").select("title").eq("is_featured", true).limit(1).maybeSingle()).data,
+    staleTime: 5 * 60 * 1000,
   });
 
   const teacherPhoto = settings?.teacher_photo_url ?? teacherFallback;
