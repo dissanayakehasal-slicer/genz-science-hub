@@ -336,6 +336,7 @@ export type Database = {
           teacher_name: string | null
           teacher_photo_url: string | null
           teacher_short_name: string | null
+          teacher_slogan: string | null
           updated_at: string
           website_name: string
         }
@@ -352,6 +353,7 @@ export type Database = {
           teacher_name?: string | null
           teacher_photo_url?: string | null
           teacher_short_name?: string | null
+          teacher_slogan?: string | null
           updated_at?: string
           website_name?: string
         }
@@ -368,6 +370,7 @@ export type Database = {
           teacher_name?: string | null
           teacher_photo_url?: string | null
           teacher_short_name?: string | null
+          teacher_slogan?: string | null
           updated_at?: string
           website_name?: string
         }

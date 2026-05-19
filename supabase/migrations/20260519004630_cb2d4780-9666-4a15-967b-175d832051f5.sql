@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS teacher_slogan text DEFAULT 'Making science unforgettable.';

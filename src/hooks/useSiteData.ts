@@ -8,6 +8,7 @@ export function useSiteSettings() {
       const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
       return data;
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
