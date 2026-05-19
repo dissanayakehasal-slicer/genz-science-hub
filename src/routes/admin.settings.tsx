@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { saveSiteSettings, uploadFile } from "@/lib/api/admin.functions";
+import { useSiteSettings } from "@/hooks/useSiteData";
+import { fileToBase64 } from "@/lib/file";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Save } from "lucide-react";
@@ -9,10 +12,9 @@ export const Route = createFileRoute("/admin/settings")({ component: SettingsAdm
 
 function SettingsAdmin() {
   const qc = useQueryClient();
-  const { data } = useQuery({
-    queryKey: ["site_settings"],
-    queryFn: async () => (await supabase.from("site_settings").select("*").limit(1).maybeSingle()).data,
-  });
+  const saveFn = useServerFn(saveSiteSettings);
+  const uploadFn = useServerFn(uploadFile);
+  const { data } = useSiteSettings();
   const [form, setForm] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (data && !form) setForm(data); }, [data]);
@@ -21,25 +23,48 @@ function SettingsAdmin() {
 
   const save = async () => {
     setBusy(true);
-    const { error } = await supabase.from("site_settings").update({
-      website_name: form.website_name, tagline: form.tagline, hero_title: form.hero_title,
-      hero_description: form.hero_description, teacher_name: form.teacher_name,
-      teacher_short_name: form.teacher_short_name, teacher_bio: form.teacher_bio,
-      teacher_slogan: form.teacher_slogan,
-      teacher_photo_url: form.teacher_photo_url, class_description: form.class_description,
-      logo_url: form.logo_url, banner_url: form.banner_url, footer_text: form.footer_text,
-    }).eq("id", form.id);
-    setBusy(false);
-    if (error) toast.error(error.message); else { toast.success("Saved!"); qc.invalidateQueries({ queryKey: ["site_settings"] }); }
+    try {
+      await saveFn({
+        data: {
+          website_name: form.website_name,
+          tagline: form.tagline,
+          hero_title: form.hero_title,
+          hero_description: form.hero_description,
+          teacher_name: form.teacher_name,
+          teacher_short_name: form.teacher_short_name,
+          teacher_bio: form.teacher_bio,
+          teacher_slogan: form.teacher_slogan,
+          teacher_photo_url: form.teacher_photo_url,
+          class_description: form.class_description,
+          logo_url: form.logo_url,
+          banner_url: form.banner_url,
+          footer_text: form.footer_text,
+        },
+      });
+      toast.success("Saved!");
+      qc.invalidateQueries({ queryKey: ["site_settings"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const uploadImage = async (file: File, bucket: string, field: string) => {
-    const path = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-    if (error) { toast.error(error.message); return; }
-    const { data: url } = supabase.storage.from(bucket).getPublicUrl(path);
-    setForm({ ...form, [field]: url.publicUrl });
-    toast.success("Uploaded");
+  const uploadImage = async (
+    file: File,
+    folder: "teacher-photos" | "logos",
+    field: string
+  ) => {
+    try {
+      const base64 = await fileToBase64(file);
+      const { url } = await uploadFn({
+        data: { folder, filename: `${Date.now()}-${file.name}`, base64 },
+      });
+      setForm({ ...form, [field]: url });
+      toast.success("Uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    }
   };
 
   const F = (k: string, label: string, type: "text" | "textarea" = "text") => (

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getAdminStats } from "@/lib/api/admin.functions";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useEffect } from "react";
 import { Bell, FileText, Image, Youtube, Trophy, Users } from "lucide-react";
@@ -10,23 +11,10 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function AdminHome() {
+  const statsFn = useServerFn(getAdminStats);
   const { data: stats } = useQuery({
     queryKey: ["admin-stats"],
-    queryFn: async () => {
-      const counts = await Promise.all([
-        supabase.from("notices").select("id", { count: "exact", head: true }),
-        supabase.from("notes").select("id", { count: "exact", head: true }),
-        supabase.from("gallery_images").select("id", { count: "exact", head: true }),
-        supabase.from("youtube_lessons").select("id", { count: "exact", head: true }),
-        supabase.from("exams").select("id", { count: "exact", head: true }),
-        supabase.from("results").select("id", { count: "exact", head: true }),
-      ]);
-      return {
-        notices: counts[0].count ?? 0, notes: counts[1].count ?? 0,
-        gallery: counts[2].count ?? 0, lessons: counts[3].count ?? 0,
-        exams: counts[4].count ?? 0, results: counts[5].count ?? 0,
-      };
-    },
+    queryFn: () => statsFn(),
   });
 
   const cards = [

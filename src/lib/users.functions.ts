@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { requireAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireAuth } from "@/lib/auth-middleware";
+import { getSql } from "@/lib/db";
 
 const usernameSchema = z
   .string()
@@ -24,25 +24,19 @@ export const listAdminUsers = createServerFn({ method: "GET" })
       throw new Error("Forbidden");
     }
 
-    const { data: rolesRows, error } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id, role, created_at");
-    if (error) throw error;
+    const sql = getSql();
+    const rolesRows = await sql`SELECT user_id, role, created_at FROM user_roles`;
+    const users = await sql`SELECT id, username, created_at FROM app_auth_users`;
 
-    const ids = Array.from(new Set((rolesRows ?? []).map((r) => r.user_id)));
-    const { data: users, error: usersErr } = await supabaseAdmin
-      .from("app_auth_users")
-      .select("id, username, created_at")
-      .in("id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
-    if (usersErr) throw usersErr;
-
-    const userMap = new Map((users ?? []).map((u) => [u.id, u.username]));
+    const userMap = new Map(
+      (users as { id: string; username: string }[]).map((u) => [u.id, u.username])
+    );
     const grouped = new Map<
       string,
       { user_id: string; username: string; roles: string[]; created_at: string }
     >();
 
-    for (const r of rolesRows ?? []) {
+    for (const r of rolesRows as { user_id: string; role: string; created_at: string }[]) {
       const username = userMap.get(r.user_id) ?? "unknown";
       if (!grouped.has(r.user_id)) {
         grouped.set(r.user_id, {
@@ -71,22 +65,16 @@ export const createAdminUser = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.roles);
+    const sql = getSql();
     const username = data.username.toLowerCase();
     const password_hash = await bcrypt.hash(data.password, 12);
 
-    const { data: created, error } = await supabaseAdmin
-      .from("app_auth_users")
-      .insert({ username, password_hash })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-
-    const userId = created.id;
-    const { error: rErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert({ user_id: userId, role: data.role });
-    if (rErr) throw new Error(rErr.message);
-
+    const ins = await sql`
+      INSERT INTO app_auth_users (username, password_hash) VALUES (${username}, ${password_hash})
+      RETURNING id
+    `;
+    const userId = (ins[0] as { id: string }).id;
+    await sql`INSERT INTO user_roles (user_id, role) VALUES (${userId}::uuid, ${data.role}::app_role)`;
     return { ok: true, user_id: userId, username };
   });
 
@@ -96,9 +84,9 @@ export const removeAdminUser = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.roles);
     if (data.user_id === context.userId) throw new Error("You cannot remove yourself");
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
-    const { error } = await supabaseAdmin.from("app_auth_users").delete().eq("id", data.user_id);
-    if (error) throw new Error(error.message);
+    const sql = getSql();
+    await sql`DELETE FROM user_roles WHERE user_id = ${data.user_id}::uuid`;
+    await sql`DELETE FROM app_auth_users WHERE id = ${data.user_id}::uuid`;
     return { ok: true };
   });
 
@@ -109,11 +97,8 @@ export const setUserPassword = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.roles);
+    const sql = getSql();
     const password_hash = await bcrypt.hash(data.password, 12);
-    const { error } = await supabaseAdmin
-      .from("app_auth_users")
-      .update({ password_hash })
-      .eq("id", data.user_id);
-    if (error) throw new Error(error.message);
+    await sql`UPDATE app_auth_users SET password_hash = ${password_hash} WHERE id = ${data.user_id}::uuid`;
     return { ok: true };
   });

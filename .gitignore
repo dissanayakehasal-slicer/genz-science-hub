@@ -20,6 +20,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+.env.vercel*
 
 # Wrangler / Cloudflare
 .wrangler/
@@ -35,3 +36,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel

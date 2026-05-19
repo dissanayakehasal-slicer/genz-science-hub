@@ -1,6 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  saveContactSettings,
+  listSocialLinksAdmin,
+  insertSocialLink,
+  deleteSocialLink,
+} from "@/lib/api/admin.functions";
+import { useContactSettings } from "@/hooks/useSiteData";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Save, Loader2, Plus, Trash2 } from "lucide-react";
@@ -9,13 +16,14 @@ export const Route = createFileRoute("/admin/contact")({ component: ContactAdmin
 
 function ContactAdmin() {
   const qc = useQueryClient();
-  const { data: contact } = useQuery({
-    queryKey: ["contact_settings"],
-    queryFn: async () => (await supabase.from("contact_settings").select("*").limit(1).maybeSingle()).data,
-  });
+  const { data: contact } = useContactSettings();
+  const listSocialFn = useServerFn(listSocialLinksAdmin);
+  const saveContactFn = useServerFn(saveContactSettings);
+  const insertSocialFn = useServerFn(insertSocialLink);
+  const deleteSocialFn = useServerFn(deleteSocialLink);
   const { data: socials } = useQuery({
     queryKey: ["social_links_admin"],
-    queryFn: async () => (await supabase.from("social_links").select("*").order("sort_order")).data ?? [],
+    queryFn: () => listSocialFn(),
   });
 
   const [form, setForm] = useState<any>(null);
@@ -27,23 +35,46 @@ function ContactAdmin() {
   const save = async () => {
     if (!form) return;
     setBusy(true);
-    const { error } = await supabase.from("contact_settings").update({
-      phone_number: form.phone_number, whatsapp_number_1: form.whatsapp_number_1, whatsapp_number_2: form.whatsapp_number_2,
-      email: form.email, address: form.address, google_map_embed_url: form.google_map_embed_url,
-    }).eq("id", form.id);
-    setBusy(false);
-    if (error) toast.error(error.message); else { toast.success("Saved"); qc.invalidateQueries({ queryKey: ["contact_settings"] }); }
+    try {
+      await saveContactFn({
+        data: {
+          phone_number: form.phone_number,
+          whatsapp_number_1: form.whatsapp_number_1,
+          whatsapp_number_2: form.whatsapp_number_2,
+          email: form.email,
+          address: form.address,
+          google_map_embed_url: form.google_map_embed_url,
+        },
+      });
+      toast.success("Saved");
+      qc.invalidateQueries({ queryKey: ["contact_settings"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const addSocial = async () => {
     if (!newUrl.trim()) return;
-    const { error } = await supabase.from("social_links").insert({ platform: newPlatform, url: newUrl.trim(), is_active: true });
-    if (error) toast.error(error.message); else { setNewUrl(""); qc.invalidateQueries({ queryKey: ["social_links_admin"] }); qc.invalidateQueries({ queryKey: ["social_links"] }); }
+    try {
+      await insertSocialFn({ data: { platform: newPlatform, url: newUrl.trim() } });
+      setNewUrl("");
+      qc.invalidateQueries({ queryKey: ["social_links_admin"] });
+      qc.invalidateQueries({ queryKey: ["social_links"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
   const removeSocial = async (id: string) => {
     if (!confirm("Delete?")) return;
-    const { error } = await supabase.from("social_links").delete().eq("id", id);
-    if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["social_links_admin"] }); qc.invalidateQueries({ queryKey: ["social_links"] }); }
+    try {
+      await deleteSocialFn({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["social_links_admin"] });
+      qc.invalidateQueries({ queryKey: ["social_links"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
 
   if (!form) return <Loader2 className="animate-spin"/>;

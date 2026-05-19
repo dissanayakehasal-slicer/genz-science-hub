@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listPlaylists,
+  listLessons,
+  saveLesson,
+  deleteLesson,
+  savePlaylist,
+  deletePlaylist,
+} from "@/lib/api/admin.functions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, X, Star } from "lucide-react";
@@ -15,29 +23,80 @@ type Playlist = { id: string; title: string; description: string | null; sort_or
 function YouTubeAdmin() {
   const qc = useQueryClient();
   const { data: categories } = useCategories("lesson");
-  const { data: playlists } = useQuery({ queryKey: ["admin_playlists"], queryFn: async () => (await supabase.from("youtube_playlists").select("*").order("sort_order")).data ?? [] });
-  const { data: lessons, isLoading } = useQuery({ queryKey: ["admin_lessons"], queryFn: async () => (await supabase.from("youtube_lessons").select("*").order("created_at", { ascending: false })).data ?? [] });
+  const playlistsFn = useServerFn(listPlaylists);
+  const lessonsFn = useServerFn(listLessons);
+  const saveLessonFn = useServerFn(saveLesson);
+  const deleteLessonFn = useServerFn(deleteLesson);
+  const savePlaylistFn = useServerFn(savePlaylist);
+  const deletePlaylistFn = useServerFn(deletePlaylist);
+  const { data: playlists } = useQuery({
+    queryKey: ["admin_playlists"],
+    queryFn: () => playlistsFn(),
+  });
+  const { data: lessons, isLoading } = useQuery({
+    queryKey: ["admin_lessons"],
+    queryFn: () => lessonsFn(),
+  });
   const [edit, setEdit] = useState<Partial<Lesson> | null>(null);
   const [newPlaylist, setNewPlaylist] = useState("");
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["admin_lessons"] }); qc.invalidateQueries({ queryKey: ["admin_playlists"] }); qc.invalidateQueries({ queryKey: ["public_lessons"] }); qc.invalidateQueries({ queryKey: ["featured-lesson"] }); };
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin_lessons"] });
+    qc.invalidateQueries({ queryKey: ["admin_playlists"] });
+    qc.invalidateQueries({ queryKey: ["yt-lessons"] });
+    qc.invalidateQueries({ queryKey: ["yt-playlists"] });
+    qc.invalidateQueries({ queryKey: ["home-highlights"] });
+  };
 
   const save = async () => {
     if (!edit?.title || !edit.youtube_url) return toast.error("Title & URL required");
-    const vid = extractYouTubeId(edit.youtube_url);
-    if (!vid) return toast.error("Invalid YouTube URL");
-    const payload = { title: edit.title, description: edit.description ?? null, youtube_url: edit.youtube_url, youtube_video_id: vid, playlist_id: edit.playlist_id || null, category_id: edit.category_id || null, is_featured: !!edit.is_featured };
-    const { error } = edit.id ? await supabase.from("youtube_lessons").update(payload).eq("id", edit.id) : await supabase.from("youtube_lessons").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Saved"); setEdit(null); refresh();
+    if (!extractYouTubeId(edit.youtube_url)) return toast.error("Invalid YouTube URL");
+    try {
+      await saveLessonFn({
+        data: {
+          id: edit.id,
+          title: edit.title,
+          description: edit.description ?? null,
+          youtube_url: edit.youtube_url,
+          playlist_id: edit.playlist_id || null,
+          category_id: edit.category_id || null,
+          is_featured: !!edit.is_featured,
+        },
+      });
+      toast.success("Saved");
+      setEdit(null);
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
-  const remove = async (id: string) => { if (!confirm("Delete?")) return; await supabase.from("youtube_lessons").delete().eq("id", id); refresh(); };
+  const remove = async (id: string) => {
+    if (!confirm("Delete?")) return;
+    try {
+      await deleteLessonFn({ data: { id } });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
+  };
   const addPlaylist = async () => {
     if (!newPlaylist) return;
-    const { error } = await supabase.from("youtube_playlists").insert({ title: newPlaylist });
-    if (error) return toast.error(error.message);
-    setNewPlaylist(""); refresh();
+    try {
+      await savePlaylistFn({ data: { title: newPlaylist } });
+      setNewPlaylist("");
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
-  const removePlaylist = async (id: string) => { if (!confirm("Delete playlist? Lessons will become unassigned.")) return; await supabase.from("youtube_playlists").delete().eq("id", id); refresh(); };
+  const removePlaylist = async (id: string) => {
+    if (!confirm("Delete playlist? Lessons will become unassigned.")) return;
+    try {
+      await deletePlaylistFn({ data: { id } });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
+  };
 
   return (
     <div>

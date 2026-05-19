@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getNotes } from "@/lib/api/public.functions";
 import { PublicLayout, PageHeader } from "@/components/PublicLayout";
 import { useCategories } from "@/hooks/useSiteData";
 import { motion } from "framer-motion";
@@ -15,9 +16,10 @@ export const Route = createFileRoute("/notes")({
 function NotesPage() {
   const [cat, setCat] = useState("all");
   const { data: categories } = useCategories("note");
+  const notesFn = useServerFn(getNotes);
   const { data: notes } = useQuery({
     queryKey: ["notes"],
-    queryFn: async () => (await supabase.from("notes").select("*, categories(name,color)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: () => notesFn(),
   });
   const filtered = (notes ?? []).filter((n: any) => cat === "all" || n.category_id === cat);
 
@@ -40,7 +42,7 @@ function NotesPage() {
               <div className="w-12 h-12 rounded-xl bg-gradient-gold grid place-items-center mb-4 group-hover:rotate-6 transition-transform">
                 <FileText className="text-[var(--brown-deep)]" size={22} />
               </div>
-              {n.categories && <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: n.categories.color }}>{n.categories.name}</span>}
+              {n.category_name && <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: n.category_color }}>{n.category_name}</span>}
               <h3 className="font-display font-semibold text-lg mt-1 mb-2">{n.title}</h3>
               {n.description && <p className="text-sm text-[var(--brown)]/70 mb-4 line-clamp-3">{n.description}</p>}
               {n.file_url && (

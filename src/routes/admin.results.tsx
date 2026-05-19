@@ -1,6 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listExams,
+  saveExam,
+  toggleExamPublish,
+  deleteExam,
+  listResults,
+  recalculateRanks,
+  insertResult,
+  insertResultsBulk,
+  deleteResult,
+} from "@/lib/api/admin.functions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, X, Upload, Eye, EyeOff, Trophy } from "lucide-react";
@@ -12,7 +23,14 @@ type Result = { id: string; exam_id: string; student_name: string; school: strin
 
 function ResultsAdmin() {
   const qc = useQueryClient();
-  const { data: exams, isLoading } = useQuery({ queryKey: ["admin_exams"], queryFn: async () => (await supabase.from("exams").select("*").order("exam_date", { ascending: false })).data ?? [] });
+  const listExamsFn = useServerFn(listExams);
+  const saveExamFn = useServerFn(saveExam);
+  const togglePublishFn = useServerFn(toggleExamPublish);
+  const deleteExamFn = useServerFn(deleteExam);
+  const { data: exams, isLoading } = useQuery({
+    queryKey: ["admin_exams"],
+    queryFn: () => listExamsFn(),
+  });
   const [examEdit, setExamEdit] = useState<Partial<Exam> | null>(null);
   const [openExam, setOpenExam] = useState<string | null>(null);
 
@@ -20,13 +38,42 @@ function ResultsAdmin() {
 
   const saveExam = async () => {
     if (!examEdit?.exam_name) return toast.error("Name required");
-    const payload = { exam_name: examEdit.exam_name, exam_date: examEdit.exam_date || null, class_name: examEdit.class_name ?? null, subject: examEdit.subject ?? null, description: examEdit.description ?? null, is_published: !!examEdit.is_published };
-    const { error } = examEdit.id ? await supabase.from("exams").update(payload).eq("id", examEdit.id) : await supabase.from("exams").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Saved"); setExamEdit(null); refresh();
+    try {
+      await saveExamFn({
+        data: {
+          id: examEdit.id,
+          exam_name: examEdit.exam_name,
+          exam_date: examEdit.exam_date || null,
+          class_name: examEdit.class_name ?? null,
+          subject: examEdit.subject ?? null,
+          description: examEdit.description ?? null,
+          is_published: !!examEdit.is_published,
+        },
+      });
+      toast.success("Saved");
+      setExamEdit(null);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed");
+    }
   };
-  const togglePublish = async (e: Exam) => { await supabase.from("exams").update({ is_published: !e.is_published }).eq("id", e.id); refresh(); };
-  const removeExam = async (id: string) => { if (!confirm("Delete exam and all results?")) return; await supabase.from("results").delete().eq("exam_id", id); await supabase.from("exams").delete().eq("id", id); refresh(); };
+  const togglePublish = async (e: Exam) => {
+    try {
+      await togglePublishFn({ data: { id: e.id, is_published: !e.is_published } });
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed");
+    }
+  };
+  const removeExam = async (id: string) => {
+    if (!confirm("Delete exam and all results?")) return;
+    try {
+      await deleteExamFn({ data: { id } });
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed");
+    }
+  };
 
   return (
     <div>
@@ -74,32 +121,78 @@ function ResultsAdmin() {
 
 function ResultsTable({ examId }: { examId: string }) {
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["results", examId], queryFn: async () => (await supabase.from("results").select("*").eq("exam_id", examId).order("rank", { nullsFirst: false })).data ?? [] });
+  const listFn = useServerFn(listResults);
+  const recalcFn = useServerFn(recalculateRanks);
+  const insertFn = useServerFn(insertResult);
+  const bulkFn = useServerFn(insertResultsBulk);
+  const deleteFn = useServerFn(deleteResult);
+  const { data, isLoading } = useQuery({
+    queryKey: ["results", examId],
+    queryFn: () => listFn({ data: { examId } }),
+  });
   const [form, setForm] = useState<Partial<Result>>({});
   const refresh = async () => {
-    await supabase.rpc("recalculate_ranks", { _exam_id: examId });
+    await recalcFn({ data: { examId } });
     qc.invalidateQueries({ queryKey: ["results", examId] });
   };
 
   const add = async () => {
     if (!form.student_name || !form.index_number || form.marks === undefined) return toast.error("Name, index & marks required");
-    const { error } = await supabase.from("results").insert({ exam_id: examId, student_name: form.student_name, index_number: form.index_number, school: form.school ?? null, marks: Number(form.marks), grade: form.grade ?? null, teacher_comment: form.teacher_comment ?? null });
-    if (error) return toast.error(error.message);
-    setForm({}); await refresh(); toast.success("Added");
+    try {
+      await insertFn({
+        data: {
+          exam_id: examId,
+          student_name: form.student_name,
+          index_number: form.index_number,
+          school: form.school ?? null,
+          marks: Number(form.marks),
+          grade: form.grade ?? null,
+          teacher_comment: form.teacher_comment ?? null,
+        },
+      });
+      setForm({});
+      await refresh();
+      toast.success("Added");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
-  const remove = async (id: string) => { await supabase.from("results").delete().eq("id", id); await refresh(); };
+  const remove = async (id: string) => {
+    try {
+      await deleteFn({ data: { id } });
+      await refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
+  };
 
   const csvUpload = async (file: File) => {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
-    const rows = lines.slice(1).map((l) => {
-      const [index_number, school, grade, student_name, marks, teacher_comment] = l.split(",").map((s) => s.trim());
-      return { exam_id: examId, student_name, index_number, school: school || null, grade: grade || null, marks: Number(marks), teacher_comment: teacher_comment || null };
-    }).filter((r) => r.student_name && r.index_number && !isNaN(r.marks));
+    const rows = lines
+      .slice(1)
+      .map((l) => {
+        const [index_number, school, grade, student_name, marks, teacher_comment] = l
+          .split(",")
+          .map((s) => s.trim());
+        return {
+          student_name,
+          index_number,
+          school: school || null,
+          grade: grade || null,
+          marks: Number(marks),
+          teacher_comment: teacher_comment || null,
+        };
+      })
+      .filter((r) => r.student_name && r.index_number && !isNaN(r.marks));
     if (!rows.length) return toast.error("No valid rows");
-    const { error } = await supabase.from("results").insert(rows);
-    if (error) return toast.error(error.message);
-    await refresh(); toast.success(`Imported ${rows.length}`);
+    try {
+      await bulkFn({ data: { exam_id: examId, rows } });
+      await refresh();
+      toast.success(`Imported ${rows.length}`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
 
   return (

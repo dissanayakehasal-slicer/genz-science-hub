@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getGallery } from "@/lib/api/public.functions";
 import { PublicLayout, PageHeader } from "@/components/PublicLayout";
 import { useCategories } from "@/hooks/useSiteData";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,9 +17,10 @@ function GalleryPage() {
   const [cat, setCat] = useState("all");
   const [lightbox, setLightbox] = useState<any>(null);
   const { data: categories } = useCategories("gallery");
+  const galleryFn = useServerFn(getGallery);
   const { data: images } = useQuery({
     queryKey: ["gallery"],
-    queryFn: async () => (await supabase.from("gallery_images").select("*, categories(name)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: () => galleryFn(),
   });
   const filtered = (images ?? []).filter((g: any) => cat === "all" || g.category_id === cat);
 

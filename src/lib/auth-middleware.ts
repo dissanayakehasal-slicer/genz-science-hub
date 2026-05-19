@@ -2,7 +2,6 @@ import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { getSession } from "start-authjs";
 import { authConfig, type AppRole } from "@/utils/auth";
-import { supabaseAdmin } from "./client.server";
 
 export const requireAuth = createMiddleware({ type: "function" }).server(async ({ next }) => {
   const request = getRequest();
@@ -23,10 +22,6 @@ export const requireAuth = createMiddleware({ type: "function" }).server(async (
       userId: session.user.id,
       username: session.user.name,
       roles: roles as AppRole[],
-      supabase: supabaseAdmin,
     },
   });
 });
-
-/** @deprecated Use requireAuth — kept as alias during migration */
-export const requireSupabaseAuth = requireAuth;

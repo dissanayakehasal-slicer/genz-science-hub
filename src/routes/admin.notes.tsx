@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listNotes, saveNote, deleteNote, uploadFile } from "@/lib/api/admin.functions";
+import { fileToBase64 } from "@/lib/file";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, X } from "lucide-react";
@@ -13,27 +15,63 @@ type Note = { id: string; title: string; description: string | null; category_id
 function NotesAdmin() {
   const qc = useQueryClient();
   const { data: categories } = useCategories("note");
+  const listFn = useServerFn(listNotes);
+  const saveFn = useServerFn(saveNote);
+  const deleteFn = useServerFn(deleteNote);
+  const uploadFn = useServerFn(uploadFile);
   const { data: notes, isLoading } = useQuery({
     queryKey: ["admin_notes"],
-    queryFn: async () => (await supabase.from("notes").select("*").order("created_at", { ascending: false })).data ?? [],
+    queryFn: () => listFn(),
   });
   const [edit, setEdit] = useState<Partial<Note> | null>(null);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin_notes"] }); qc.invalidateQueries({ queryKey: ["public_notes"] }); };
 
   const save = async () => {
     if (!edit?.title) return toast.error("Title required");
-    const payload = { title: edit.title, description: edit.description ?? null, category_id: edit.category_id || null, file_url: edit.file_url || null, external_link: edit.external_link || null, file_type: edit.file_type ?? "pdf" };
-    const { error } = edit.id ? await supabase.from("notes").update(payload).eq("id", edit.id) : await supabase.from("notes").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Saved"); setEdit(null); refresh();
+    try {
+      await saveFn({
+        data: {
+          id: edit.id,
+          title: edit.title,
+          description: edit.description ?? null,
+          category_id: edit.category_id || null,
+          file_url: edit.file_url || null,
+          external_link: edit.external_link || null,
+          file_type: edit.file_type ?? "pdf",
+        },
+      });
+      toast.success("Saved");
+      setEdit(null);
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
-  const remove = async (id: string) => { if (!confirm("Delete?")) return; const { error } = await supabase.from("notes").delete().eq("id", id); if (error) return toast.error(error.message); refresh(); toast.success("Deleted"); };
+  const remove = async (id: string) => {
+    if (!confirm("Delete?")) return;
+    try {
+      await deleteFn({ data: { id } });
+      refresh();
+      toast.success("Deleted");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
+  };
   const upload = async (file: File) => {
-    const path = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("notes").upload(path, file);
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from("notes").getPublicUrl(path);
-    setEdit({ ...edit, file_url: data.publicUrl, file_type: file.name.split(".").pop()?.toLowerCase() ?? "pdf" }); toast.success("Uploaded");
+    try {
+      const base64 = await fileToBase64(file);
+      const { url } = await uploadFn({
+        data: { folder: "notes", filename: `${Date.now()}-${file.name}`, base64 },
+      });
+      setEdit({
+        ...edit,
+        file_url: url,
+        file_type: file.name.split(".").pop()?.toLowerCase() ?? "pdf",
+      });
+      toast.success("Uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    }
   };
 
   return (

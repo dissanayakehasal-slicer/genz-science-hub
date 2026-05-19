@@ -19,6 +19,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as ApiSetupDbRouteImport } from './routes/api/setup-db'
 import { Route as AdminYoutubeRouteImport } from './routes/admin.youtube'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -79,6 +80,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const ApiSetupDbRoute = ApiSetupDbRouteImport.update({
+  id: '/api/setup-db',
+  path: '/api/setup-db',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminYoutubeRoute = AdminYoutubeRouteImport.update({
   id: '/youtube',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
+  '/api/setup-db': typeof ApiSetupDbRoute
   '/admin/': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
+  '/api/setup-db': typeof ApiSetupDbRoute
   '/admin': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
+  '/api/setup-db': typeof ApiSetupDbRoute
   '/admin/': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
@@ -218,6 +227,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/youtube'
+    | '/api/setup-db'
     | '/admin/'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/youtube'
+    | '/api/setup-db'
     | '/admin'
     | '/api/auth/$'
   id:
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/users'
     | '/admin/youtube'
+    | '/api/setup-db'
     | '/admin/'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   NoticesRoute: typeof NoticesRoute
   ResultsRoute: typeof ResultsRoute
   YoutubeRoute: typeof YoutubeRoute
+  ApiSetupDbRoute: typeof ApiSetupDbRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -349,6 +362,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/setup-db': {
+      id: '/api/setup-db'
+      path: '/api/setup-db'
+      fullPath: '/api/setup-db'
+      preLoaderRoute: typeof ApiSetupDbRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/admin/youtube': {
       id: '/admin/youtube'
@@ -461,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   NoticesRoute: NoticesRoute,
   ResultsRoute: ResultsRoute,
   YoutubeRoute: YoutubeRoute,
+  ApiSetupDbRoute: ApiSetupDbRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

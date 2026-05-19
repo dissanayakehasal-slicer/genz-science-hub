@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listNotices, saveNotice, deleteNotice, uploadFile } from "@/lib/api/admin.functions";
+import { fileToBase64 } from "@/lib/file";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Star, Pencil, X } from "lucide-react";
@@ -16,41 +18,66 @@ type Notice = {
 function NoticesAdmin() {
   const qc = useQueryClient();
   const { data: categories } = useCategories("notice");
+  const listFn = useServerFn(listNotices);
+  const saveFn = useServerFn(saveNotice);
+  const deleteFn = useServerFn(deleteNotice);
+  const uploadFn = useServerFn(uploadFile);
   const { data: notices, isLoading } = useQuery({
     queryKey: ["admin_notices"],
-    queryFn: async () => (await supabase.from("notices").select("*").order("publish_date", { ascending: false })).data ?? [],
+    queryFn: () => listFn(),
   });
   const [edit, setEdit] = useState<Partial<Notice> | null>(null);
 
-  const refresh = () => { qc.invalidateQueries({ queryKey: ["admin_notices"] }); qc.invalidateQueries({ queryKey: ["public_notices"] }); qc.invalidateQueries({ queryKey: ["latest-notice"] }); };
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["admin_notices"] });
+    qc.invalidateQueries({ queryKey: ["notices"] });
+    qc.invalidateQueries({ queryKey: ["home-highlights"] });
+  };
 
   const save = async () => {
     if (!edit?.title) return toast.error("Title required");
-    const payload = {
-      title: edit.title, description: edit.description ?? null,
-      category_id: edit.category_id || null, attachment_url: edit.attachment_url || null,
-      is_important: !!edit.is_important, publish_date: edit.publish_date || new Date().toISOString(),
-    };
-    const { error } = edit.id
-      ? await supabase.from("notices").update(payload).eq("id", edit.id)
-      : await supabase.from("notices").insert(payload);
-    if (error) return toast.error(error.message);
-    toast.success("Saved"); setEdit(null); refresh();
+    try {
+      await saveFn({
+        data: {
+          id: edit.id,
+          title: edit.title,
+          description: edit.description ?? null,
+          category_id: edit.category_id || null,
+          attachment_url: edit.attachment_url || null,
+          is_important: !!edit.is_important,
+          publish_date: edit.publish_date || new Date().toISOString(),
+        },
+      });
+      toast.success("Saved");
+      setEdit(null);
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm("Delete this notice?")) return;
-    const { error } = await supabase.from("notices").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Deleted"); refresh();
+    try {
+      await deleteFn({ data: { id } });
+      toast.success("Deleted");
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
 
   const upload = async (file: File) => {
-    const path = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("notice-attachments").upload(path, file);
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from("notice-attachments").getPublicUrl(path);
-    setEdit({ ...edit, attachment_url: data.publicUrl }); toast.success("Uploaded");
+    try {
+      const base64 = await fileToBase64(file);
+      const { url } = await uploadFn({
+        data: { folder: "notice-attachments", filename: `${Date.now()}-${file.name}`, base64 },
+      });
+      setEdit({ ...edit, attachment_url: url });
+      toast.success("Uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    }
   };
 
   return (

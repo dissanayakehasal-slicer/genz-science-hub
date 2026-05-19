@@ -1,43 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  getSiteSettings,
+  getContactSettings,
+  getSocialLinks,
+  getCategories,
+} from "@/lib/api/public.functions";
 
 export function useSiteSettings() {
+  const fn = useServerFn(getSiteSettings);
   return useQuery({
     queryKey: ["site_settings"],
-    queryFn: async () => {
-      const { data } = await supabase.from("site_settings").select("*").limit(1).maybeSingle();
-      return data;
-    },
+    queryFn: () => fn(),
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useContactSettings() {
+  const fn = useServerFn(getContactSettings);
   return useQuery({
     queryKey: ["contact_settings"],
-    queryFn: async () => {
-      const { data } = await supabase.from("contact_settings").select("*").limit(1).maybeSingle();
-      return data;
-    },
+    queryFn: () => fn(),
   });
 }
 
 export function useSocialLinks() {
+  const fn = useServerFn(getSocialLinks);
   return useQuery({
     queryKey: ["social_links"],
-    queryFn: async () => {
-      const { data } = await supabase.from("social_links").select("*").eq("is_active", true).order("sort_order");
-      return data ?? [];
-    },
+    queryFn: () => fn(),
   });
 }
 
 export function useCategories(type: string) {
+  const fn = useServerFn(getCategories);
   return useQuery({
     queryKey: ["categories", type],
-    queryFn: async () => {
-      const { data } = await supabase.from("categories").select("*").eq("type", type).order("sort_order");
-      return data ?? [];
-    },
+    queryFn: () => fn({ data: { type } }),
   });
 }

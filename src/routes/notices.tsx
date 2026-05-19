@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getNotices } from "@/lib/api/public.functions";
 import { PublicLayout, PageHeader } from "@/components/PublicLayout";
 import { useCategories } from "@/hooks/useSiteData";
 import { motion } from "framer-motion";
@@ -16,12 +17,10 @@ function NoticesPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("all");
   const { data: categories } = useCategories("notice");
+  const noticesFn = useServerFn(getNotices);
   const { data: notices, isLoading } = useQuery({
     queryKey: ["notices"],
-    queryFn: async () => {
-      const { data } = await supabase.from("notices").select("*, categories(name,color)").order("publish_date", { ascending: false });
-      return data ?? [];
-    },
+    queryFn: () => noticesFn(),
   });
 
   const filtered = (notices ?? []).filter((n: any) => {
@@ -46,7 +45,7 @@ function NoticesPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4">{Array.from({length:3}).map((_,i) => <div key={i} className="h-32 rounded-2xl bg-white/60 animate-pulse" />)}</div>
+          <div className="grid gap-4">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-32 rounded-2xl bg-white/60 animate-pulse" />)}</div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 text-[var(--brown)]/60">No notices found.</div>
         ) : (
@@ -59,11 +58,11 @@ function NoticesPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
                 className="bg-white rounded-2xl p-6 shadow-card hover:shadow-elegant transition-all border-l-4"
-                style={{ borderLeftColor: n.categories?.color ?? "var(--gold)" }}
+                style={{ borderLeftColor: n.category_color ?? "var(--gold)" }}
               >
                 <div className="flex items-start justify-between gap-4 mb-2 flex-wrap">
                   <div className="flex items-center gap-2 text-xs">
-                    {n.categories && <span className="px-2.5 py-1 rounded-full font-semibold text-[var(--brown-deep)]" style={{ background: `${n.categories.color}33` }}>{n.categories.name}</span>}
+                    {n.category_name && <span className="px-2.5 py-1 rounded-full font-semibold text-[var(--brown-deep)]" style={{ background: `${n.category_color}33` }}>{n.category_name}</span>}
                     {n.is_important && <span className="inline-flex items-center gap-1 text-[var(--destructive)] font-semibold"><Star size={12} fill="currentColor"/> Important</span>}
                   </div>
                   <div className="text-xs text-[var(--brown)]/60 flex items-center gap-1"><Calendar size={12}/> {new Date(n.publish_date).toLocaleDateString()}</div>

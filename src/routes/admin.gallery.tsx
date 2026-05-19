@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listGallery,
+  insertGalleryImage,
+  updateGalleryImage,
+  deleteGalleryImage,
+  uploadFile,
+} from "@/lib/api/admin.functions";
+import { fileToBase64 } from "@/lib/file";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Upload, Trash2, X } from "lucide-react";
@@ -12,30 +20,65 @@ type Img = { id: string; title: string | null; caption: string | null; image_url
 function GalleryAdmin() {
   const qc = useQueryClient();
   const { data: categories } = useCategories("gallery");
-  const { data: images, isLoading } = useQuery({ queryKey: ["admin_gallery"], queryFn: async () => (await supabase.from("gallery_images").select("*").order("created_at", { ascending: false })).data ?? [] });
+  const listFn = useServerFn(listGallery);
+  const insertFn = useServerFn(insertGalleryImage);
+  const updateFn = useServerFn(updateGalleryImage);
+  const deleteFn = useServerFn(deleteGalleryImage);
+  const uploadFn = useServerFn(uploadFile);
+  const { data: images, isLoading } = useQuery({
+    queryKey: ["admin_gallery"],
+    queryFn: () => listFn(),
+  });
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<Img | null>(null);
   const refresh = () => { qc.invalidateQueries({ queryKey: ["admin_gallery"] }); qc.invalidateQueries({ queryKey: ["public_gallery"] }); };
 
   const uploadMany = async (files: FileList) => {
     setBusy(true);
-    for (const file of Array.from(files)) {
-      const path = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("gallery").upload(path, file);
-      if (error) { toast.error(error.message); continue; }
-      const { data } = supabase.storage.from("gallery").getPublicUrl(path);
-      await supabase.from("gallery_images").insert({ image_url: data.publicUrl, title: file.name });
+    try {
+      for (const file of Array.from(files)) {
+        const base64 = await fileToBase64(file);
+        const { url } = await uploadFn({
+          data: { folder: "gallery", filename: `${Date.now()}-${file.name}`, base64 },
+        });
+        await insertFn({ data: { image_url: url, title: file.name } });
+      }
+      refresh();
+      toast.success("Uploaded");
+    } catch (e: any) {
+      toast.error(e.message ?? "Upload failed");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false); refresh(); toast.success("Uploaded");
   };
 
-  const remove = async (id: string) => { if (!confirm("Delete?")) return; await supabase.from("gallery_images").delete().eq("id", id); refresh(); };
+  const remove = async (id: string) => {
+    if (!confirm("Delete?")) return;
+    try {
+      await deleteFn({ data: { id } });
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
+  };
 
   const saveEdit = async () => {
     if (!edit) return;
-    const { error } = await supabase.from("gallery_images").update({ title: edit.title, caption: edit.caption, category_id: edit.category_id }).eq("id", edit.id);
-    if (error) return toast.error(error.message);
-    setEdit(null); refresh(); toast.success("Saved");
+    try {
+      await updateFn({
+        data: {
+          id: edit.id,
+          title: edit.title,
+          caption: edit.caption,
+          category_id: edit.category_id,
+        },
+      });
+      setEdit(null);
+      refresh();
+      toast.success("Saved");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
 
   return (

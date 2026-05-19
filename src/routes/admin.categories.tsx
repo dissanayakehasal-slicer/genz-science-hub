@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { listCategories, saveCategory, deleteCategory } from "@/lib/api/admin.functions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
@@ -14,20 +15,34 @@ function CategoriesAdmin() {
   const [type, setType] = useState("notice");
   const [name, setName] = useState("");
   const [color, setColor] = useState("#D4A017");
+  const listFn = useServerFn(listCategories);
+  const saveFn = useServerFn(saveCategory);
+  const deleteFn = useServerFn(deleteCategory);
   const { data } = useQuery({
     queryKey: ["all-categories"],
-    queryFn: async () => (await supabase.from("categories").select("*").order("type").order("sort_order")).data ?? [],
+    queryFn: () => listFn(),
   });
 
   const add = async () => {
     if (!name.trim()) return;
-    const { error } = await supabase.from("categories").insert({ name: name.trim(), type, color });
-    if (error) toast.error(error.message); else { setName(""); qc.invalidateQueries({ queryKey: ["all-categories"] }); toast.success("Added"); }
+    try {
+      await saveFn({ data: { name: name.trim(), type, color } });
+      setName("");
+      qc.invalidateQueries({ queryKey: ["all-categories"] });
+      toast.success("Added");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
   const remove = async (id: string) => {
     if (!confirm("Delete category?")) return;
-    const { error } = await supabase.from("categories").delete().eq("id", id);
-    if (error) toast.error(error.message); else { qc.invalidateQueries({ queryKey: ["all-categories"] }); toast.success("Deleted"); }
+    try {
+      await deleteFn({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["all-categories"] });
+      toast.success("Deleted");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    }
   };
 
   const grouped = TYPES.map((t) => ({ type: t, items: (data ?? []).filter((c: any) => c.type === t) }));

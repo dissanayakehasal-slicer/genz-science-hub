@@ -7,11 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
 import type { Session } from "@auth/core/types";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { fetchAuthSession, mintSupabaseAccessToken } from "@/lib/auth-session";
+import { fetchAuthSession } from "@/lib/auth-session";
 
 import appCss from "../styles.css?url";
 
@@ -95,23 +93,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  const { queryClient, session } = Route.useRouteContext();
-
-  useEffect(() => {
-    if (!session?.user?.id) {
-      void supabase.auth.signOut();
-      return;
-    }
-    void mintSupabaseAccessToken().then((result) => {
-      if (result?.access_token) {
-        void supabase.auth.setSession({
-          access_token: result.access_token,
-          refresh_token: result.access_token,
-        });
-      }
-    });
-  }, [session?.user?.id]);
-
+  const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />

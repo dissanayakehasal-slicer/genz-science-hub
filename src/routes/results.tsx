@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getPublishedExams, getTop10, lookupResult } from "@/lib/api/public.functions";
 import { PublicLayout, PageHeader } from "@/components/PublicLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
@@ -15,9 +16,10 @@ function ResultsPage() {
   const [topExam, setTopExam] = useState<any>(null);
   const [lookupExam, setLookupExam] = useState<any>(null);
 
+  const examsFn = useServerFn(getPublishedExams);
   const { data: exams } = useQuery({
     queryKey: ["public-exams"],
-    queryFn: async () => (await supabase.from("exams").select("*").eq("is_published", true).order("exam_date", { ascending: false })).data ?? [],
+    queryFn: () => examsFn(),
   });
 
   return (
@@ -61,9 +63,10 @@ function ResultsPage() {
 }
 
 function Top10Modal({ exam, onClose }: { exam: any; onClose: () => void }) {
+  const top10Fn = useServerFn(getTop10);
   const { data, isLoading } = useQuery({
     queryKey: ["top10", exam.id],
-    queryFn: async () => (await supabase.rpc("get_top10", { _exam_id: exam.id })).data ?? [],
+    queryFn: () => top10Fn({ data: { examId: exam.id } }),
   });
   return (
     <ModalShell onClose={onClose}>
@@ -95,13 +98,10 @@ function Top10Modal({ exam, onClose }: { exam: any; onClose: () => void }) {
 function LookupModal({ exam, onClose }: { exam: any; onClose: () => void }) {
   const [idx, setIdx] = useState("");
   const [submitted, setSubmitted] = useState("");
+  const lookupFn = useServerFn(lookupResult);
   const { data, isFetching } = useQuery({
     queryKey: ["lookup", exam.id, submitted],
-    queryFn: async () => {
-      if (!submitted) return null;
-      const { data } = await supabase.rpc("lookup_result", { _exam_id: exam.id, _index_number: submitted });
-      return data?.[0] ?? null;
-    },
+    queryFn: () => lookupFn({ data: { examId: exam.id, indexNumber: submitted } }),
     enabled: !!submitted,
   });
   return (

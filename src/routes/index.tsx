@@ -4,7 +4,8 @@ import { PublicLayout } from "@/components/PublicLayout";
 import { ParticlesBackground } from "@/components/ParticlesBackground";
 import { useSiteSettings } from "@/hooks/useSiteData";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getHomeHighlights } from "@/lib/api/public.functions";
 import { ArrowRight, BookOpen, Bell, Trophy, Youtube, Image as ImageIcon, Phone } from "lucide-react";
 import teacherFallback from "@/assets/teacher-placeholder.jpg";
 
@@ -24,19 +25,10 @@ const quickLinks = [
 
 function HomePage() {
   const { data: settings } = useSiteSettings();
-  const { data: latestNotice } = useQuery({
-    queryKey: ["latest-notice"],
-    queryFn: async () => (await supabase.from("notices").select("title,publish_date").order("publish_date", { ascending: false }).limit(1).maybeSingle()).data,
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: latestExam } = useQuery({
-    queryKey: ["latest-exam"],
-    queryFn: async () => (await supabase.from("exams").select("exam_name,exam_date").eq("is_published", true).order("exam_date", { ascending: false }).limit(1).maybeSingle()).data,
-    staleTime: 5 * 60 * 1000,
-  });
-  const { data: featuredLesson } = useQuery({
-    queryKey: ["featured-lesson"],
-    queryFn: async () => (await supabase.from("youtube_lessons").select("title").eq("is_featured", true).limit(1).maybeSingle()).data,
+  const highlightsFn = useServerFn(getHomeHighlights);
+  const { data: highlights } = useQuery({
+    queryKey: ["home-highlights"],
+    queryFn: () => highlightsFn(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -47,7 +39,7 @@ function HomePage() {
       {/* Hero */}
       <section className="relative bg-gradient-hero overflow-hidden">
         <ParticlesBackground />
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-20 pb-24 text-center">
+        <motion.div className="relative max-w-7xl mx-auto px-6 lg:px-8 pt-20 pb-24 text-center">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="inline-block mb-6 px-4 py-1.5 rounded-full bg-[var(--gold-soft)]/50 border border-[var(--gold)]/30 text-xs uppercase tracking-[0.2em] font-semibold text-[var(--brown)]">
             With {settings?.teacher_name ?? "Geeth Munasingha"} — {settings?.teacher_short_name ?? "GMS"}
           </motion.div>
@@ -68,7 +60,7 @@ function HomePage() {
               Check Results
             </Link>
           </motion.div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Quick links */}
@@ -93,7 +85,8 @@ function HomePage() {
             whileHover={{ scale: 1.02 }}
             src={teacherPhoto}
             alt={settings?.teacher_name ?? "Teacher"}
-            width={768} height={896}
+            width={768}
+            height={896}
             className="relative rounded-3xl shadow-elegant border-4 border-[var(--gold)] aspect-[4/5] object-cover w-full"
           />
           <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-[var(--brown-deep)] text-[var(--gold-soft)] text-xs uppercase tracking-[0.2em] px-5 py-2 rounded-full shadow-gold">
@@ -117,9 +110,9 @@ function HomePage() {
       {/* Latest content cards */}
       <section className="max-w-7xl mx-auto px-6 lg:px-8 pb-12 grid md:grid-cols-3 gap-6">
         {[
-          { title: "Latest Notice", subtitle: latestNotice?.title ?? "No notices yet", to: "/notices", Icon: Bell },
-          { title: "Latest Exam", subtitle: latestExam?.exam_name ?? "No exams yet", to: "/results", Icon: Trophy },
-          { title: "Featured Lesson", subtitle: featuredLesson?.title ?? "Coming soon", to: "/youtube", Icon: Youtube },
+          { title: "Latest Notice", subtitle: highlights?.notice?.title ?? "No notices yet", to: "/notices", Icon: Bell },
+          { title: "Latest Exam", subtitle: highlights?.exam?.exam_name ?? "No exams yet", to: "/results", Icon: Trophy },
+          { title: "Featured Lesson", subtitle: highlights?.lesson?.title ?? "Coming soon", to: "/youtube", Icon: Youtube },
         ].map((c, i) => (
           <motion.div key={c.title} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
             <Link to={c.to} className="block bg-white rounded-2xl p-6 shadow-card hover:shadow-elegant hover:-translate-y-1 transition-all">

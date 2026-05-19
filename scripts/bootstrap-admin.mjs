@@ -1,82 +1,58 @@
 /**
- * Create/update hasal admin for Auth.js (app_auth_users + super_admin role).
- *
- * Usage:
- *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npm run bootstrap-admin
+ * Create/update hasal admin in Vercel Postgres.
+ * Usage: POSTGRES_URL=... node scripts/bootstrap-admin.mjs
  */
-import { createClient } from "@supabase/supabase-js";
 import bcrypt from "bcryptjs";
+import pg from "pg";
 import { loadDotenv } from "./load-dotenv.mjs";
 
 loadDotenv();
 
-const url = process.env.SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url =
+  process.env.POSTGRES_URL ??
+  process.env.DATABASE_URL ??
+  process.env.POSTGRES_URL_NON_POOLING;
+
 const password = process.env.ADMIN_BOOTSTRAP_PASSWORD ?? "Hasal@2011";
 const username = "hasal";
 
-if (!url || !serviceKey) {
-  console.error(
-    "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.\n" +
-      "Get them from Supabase → Project Settings → API, add to .env, then rerun."
-  );
+if (!url) {
+  console.error("Set POSTGRES_URL or DATABASE_URL (from Vercel → Storage → Neon).");
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+await client.connect();
 
 const password_hash = await bcrypt.hash(password, 12);
 
-const { data: existing, error: findErr } = await admin
-  .from("app_auth_users")
-  .select("id")
-  .eq("username", username)
-  .maybeSingle();
-
-if (findErr) {
-  console.error(findErr.message);
-  console.error("\nRun supabase migrations first (app_auth_users table).");
-  process.exit(1);
-}
+const existing = await client.query(
+  `SELECT id FROM app_auth_users WHERE username = $1`,
+  [username]
+);
 
 let userId;
-
-if (existing) {
-  const { error } = await admin
-    .from("app_auth_users")
-    .update({ password_hash })
-    .eq("id", existing.id);
-  if (error) {
-    console.error(error.message);
-    process.exit(1);
-  }
-  userId = existing.id;
+if (existing.rows[0]) {
+  userId = existing.rows[0].id;
+  await client.query(`UPDATE app_auth_users SET password_hash = $1 WHERE id = $2`, [
+    password_hash,
+    userId,
+  ]);
   console.log("Updated password for:", username);
 } else {
-  const { data: created, error } = await admin
-    .from("app_auth_users")
-    .insert({ username, password_hash })
-    .select("id")
-    .single();
-  if (error) {
-    console.error(error.message);
-    process.exit(1);
-  }
-  userId = created.id;
+  const ins = await client.query(
+    `INSERT INTO app_auth_users (username, password_hash) VALUES ($1, $2) RETURNING id`,
+    [username, password_hash]
+  );
+  userId = ins.rows[0].id;
   console.log("Created user:", username);
 }
 
-await admin.from("user_roles").delete().eq("user_id", userId);
-const { error: roleErr } = await admin
-  .from("user_roles")
-  .insert({ user_id: userId, role: "super_admin" });
-if (roleErr) {
-  console.error(roleErr.message);
-  process.exit(1);
-}
+await client.query(`DELETE FROM user_roles WHERE user_id = $1`, [userId]);
+await client.query(
+  `INSERT INTO user_roles (user_id, role) VALUES ($1, 'super_admin') ON CONFLICT DO NOTHING`,
+  [userId]
+);
 
+await client.end();
 console.log("super_admin role assigned.");
-console.log("Login on Vercel with username:", username, "password:", password);
-console.log("Ensure AUTH_SECRET and SUPABASE_JWT_SECRET are set on Vercel.");

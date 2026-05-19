@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { getYoutubePlaylists, getYoutubeLessons } from "@/lib/api/public.functions";
 import { PublicLayout, PageHeader } from "@/components/PublicLayout";
 import { motion } from "framer-motion";
 import { useMemo, useState } from "react";
@@ -17,13 +18,15 @@ function YouTubePage() {
   const [playlist, setPlaylist] = useState<string>("all");
   const [q, setQ] = useState("");
 
+  const playlistsFn = useServerFn(getYoutubePlaylists);
+  const lessonsFn = useServerFn(getYoutubeLessons);
   const { data: playlists } = useQuery({
     queryKey: ["yt-playlists"],
-    queryFn: async () => (await supabase.from("youtube_playlists").select("*").order("sort_order")).data ?? [],
+    queryFn: () => playlistsFn(),
   });
   const { data: lessons } = useQuery({
     queryKey: ["yt-lessons"],
-    queryFn: async () => (await supabase.from("youtube_lessons").select("*, youtube_playlists(title)").order("created_at", { ascending: false })).data ?? [],
+    queryFn: () => lessonsFn(),
   });
 
   const filtered = useMemo(() => (lessons ?? []).filter((l: any) => {
@@ -73,7 +76,7 @@ function YouTubePage() {
                   </div>
                   <div className="p-4">
                     <h3 className="font-semibold line-clamp-2">{l.title}</h3>
-                    {l.youtube_playlists && <div className="text-xs text-[var(--brown)]/60 mt-1">{l.youtube_playlists.title}</div>}
+                    {l.playlist_title && <div className="text-xs text-[var(--brown)]/60 mt-1">{l.playlist_title}</div>}
                   </div>
                 </motion.button>
               );
