@@ -8,28 +8,34 @@ export function useAuth() {
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadRoles = (uid: string) => {
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", uid)
-      .then(({ data }) => setRoles((data ?? []).map((r: any) => r.role)));
+  const loadRoles = async (uid: string) => {
+    const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+    setRoles((data ?? []).map((r: any) => r.role));
   };
 
   useEffect(() => {
+    let mounted = true;
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) setTimeout(() => loadRoles(s.user.id), 0);
-      else setRoles([]);
+      if (s?.user) {
+        setLoading(true);
+        // defer to avoid deadlock inside the callback
+        setTimeout(() => loadRoles(s.user.id).finally(() => mounted && setLoading(false)), 0);
+      } else {
+        setRoles([]);
+        setLoading(false);
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
-      if (data.session?.user) loadRoles(data.session.user.id);
-      setLoading(false);
+      if (data.session?.user) await loadRoles(data.session.user.id);
+      if (mounted) setLoading(false);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, []);
 
   const isAdmin = roles.includes("admin") || roles.includes("super_admin");
