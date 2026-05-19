@@ -3,6 +3,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { requireAuth } from "@/lib/auth-middleware";
 import { getSql } from "@/lib/db";
+import type { AppRole } from "@/utils/auth";
 
 const usernameSchema = z
   .string()
@@ -78,12 +79,25 @@ export const createAdminUser = createServerFn({ method: "POST" })
     return { ok: true, user_id: userId, username };
   });
 
+async function targetHasRole(userId: string, role: AppRole) {
+  const sql = getSql();
+  const rows = await sql`
+    SELECT 1 FROM user_roles
+    WHERE user_id = ${userId}::uuid AND role = ${role}::app_role
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
 export const removeAdminUser = createServerFn({ method: "POST" })
   .middleware([requireAuth])
   .inputValidator((input) => z.object({ user_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.roles);
     if (data.user_id === context.userId) throw new Error("You cannot remove yourself");
+    if (await targetHasRole(data.user_id, "super_admin")) {
+      throw new Error("Cannot remove a super admin. Reset their password instead if needed.");
+    }
     const sql = getSql();
     await sql`DELETE FROM user_roles WHERE user_id = ${data.user_id}::uuid`;
     await sql`DELETE FROM app_auth_users WHERE id = ${data.user_id}::uuid`;
@@ -97,10 +111,27 @@ export const setUserPassword = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.roles);
+    if (data.user_id === context.userId) {
+      throw new Error("Use Site Settings to change your own password.");
+    }
+
     const sql = getSql();
+    const existing = await sql`
+      SELECT id, username FROM app_auth_users WHERE id = ${data.user_id}::uuid LIMIT 1
+    `;
+    if (!existing.length) {
+      throw new Error("User not found. They may only exist as an env-based login.");
+    }
+
     const password_hash = await bcrypt.hash(data.password, 12);
-    await sql`UPDATE app_auth_users SET password_hash = ${password_hash} WHERE id = ${data.user_id}::uuid`;
-    return { ok: true };
+    const updated = await sql`
+      UPDATE app_auth_users SET password_hash = ${password_hash} WHERE id = ${data.user_id}::uuid
+      RETURNING id
+    `;
+    if (!updated.length) {
+      throw new Error("Password update failed");
+    }
+    return { ok: true, username: (existing[0] as { username: string }).username };
   });
 
 export const changeMyPassword = createServerFn({ method: "POST" })

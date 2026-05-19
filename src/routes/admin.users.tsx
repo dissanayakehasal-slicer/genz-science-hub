@@ -53,7 +53,10 @@ function UsersAdmin() {
   const handlePw = async (user_id: string, uname: string) => {
     const pw = prompt(`New password for ${uname}:`);
     if (!pw || pw.length < 6) return toast.error("Min 6 chars");
-    try { await pwFn({ data: { user_id, password: pw } }); toast.success("Password updated"); }
+    try {
+      const res = await pwFn({ data: { user_id, password: pw } });
+      toast.success(`Password updated for ${res?.username ?? uname}`);
+    }
     catch (e: any) { toast.error(e.message); }
   };
 
@@ -117,13 +120,28 @@ function UsersAdmin() {
                     </td>
                     <td className="px-4 py-3 text-[var(--brown)]/70">{new Date(u.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
-                      {isSuperAdmin && u.user_id !== data?.me.userId && (
+                      {u.user_id === data?.me.userId ? (
+                        <span className="text-xs text-[var(--brown)]/50">(you — use Site Settings for your password)</span>
+                      ) : isSuperAdmin ? (
                         <div className="inline-flex gap-2">
-                          <button onClick={() => handlePw(u.user_id, u.username)} className="text-xs px-2 py-1 rounded-lg bg-[var(--cream)] hover:bg-[var(--gold-soft)]/40 inline-flex items-center gap-1"><KeyRound size={12}/> reset pw</button>
-                          <button onClick={() => handleRemove(u.user_id, u.username)} className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 inline-flex items-center gap-1"><Trash2 size={12}/> remove</button>
+                          <button
+                            type="button"
+                            onClick={() => handlePw(u.user_id, u.username)}
+                            className="text-xs px-2 py-1 rounded-lg bg-[var(--cream)] hover:bg-[var(--gold-soft)]/40 inline-flex items-center gap-1"
+                          >
+                            <KeyRound size={12} /> reset pw
+                          </button>
+                          {!isSuper && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemove(u.user_id, u.username)}
+                              className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 inline-flex items-center gap-1"
+                            >
+                              <Trash2 size={12} /> remove
+                            </button>
+                          )}
                         </div>
-                      )}
-                      {u.user_id === data?.me.userId && <span className="text-xs text-[var(--brown)]/50">(you)</span>}
+                      ) : null}
                     </td>
                   </tr>
                 );
