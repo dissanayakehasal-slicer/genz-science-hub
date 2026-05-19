@@ -64,6 +64,7 @@ function SettingsAdmin() {
         {F("hero_description", "Hero Description", "textarea")}
         {F("teacher_name", "Teacher Name")}
         {F("teacher_short_name", "Teacher Short Name (GMS)")}
+        {F("teacher_slogan", "Teacher Slogan (under name on home)")}
         <div className="md:col-span-2">{F("teacher_bio", "Teacher Bio", "textarea")}</div>
         <div className="md:col-span-2">{F("class_description", "Class Description", "textarea")}</div>
         {F("footer_text", "Footer Text")}
