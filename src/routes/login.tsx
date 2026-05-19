@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getSupabasePublicConfig } from "@/lib/supabase-env";
 import { motion } from "framer-motion";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
@@ -12,12 +13,29 @@ export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Admin Login — GEN_ZCIENCE" }] }),
 });
 
+async function userHasAdminRole(userId: string) {
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  if (error) throw error;
+  const roles = (data ?? []).map((r) => r.role);
+  return roles.includes("admin") || roles.includes("super_admin");
+}
+
 function LoginPage() {
   const nav = useNavigate();
   const { session, isAdmin, loading } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const { url, key } = getSupabasePublicConfig();
+    if (!url || !key) {
+      setConfigError(
+        "Supabase is not configured for this deployment. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY) in Vercel, then redeploy."
+      );
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && session && isAdmin) nav({ to: "/admin" });
@@ -25,14 +43,36 @@ function LoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (configError) {
+      toast.error(configError);
+      return;
+    }
     setBusy(true);
     try {
       const email = `${username.trim().toLowerCase()}@gmszcience.local`;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("invalid login credentials")) {
+          throw new Error(
+            "Invalid username or password. If this is a new deployment, run: npm run bootstrap-admin"
+          );
+        }
+        throw error;
+      }
+      const userId = signInData.user?.id ?? signInData.session?.user?.id;
+      if (!userId) throw new Error("Sign-in succeeded but no user session was returned.");
+
+      const admin = await userHasAdminRole(userId);
+      if (!admin) {
+        await supabase.auth.signOut();
+        throw new Error("This account is not an admin. Ask a super admin to grant access.");
+      }
+
       toast.success("Welcome back!");
-    } catch (e: any) {
-      toast.error(e.message ?? "Login failed");
+      nav({ to: "/admin" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Login failed";
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -45,11 +85,18 @@ function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md bg-white rounded-3xl shadow-elegant p-8"
       >
-        <div className="flex flex-col items-center mb-6">
+        <motion.div className="flex flex-col items-center mb-6">
           <Logo size={56} />
           <h1 className="mt-4 font-display font-bold text-2xl">Admin Access</h1>
           <p className="text-sm text-[var(--brown)]/70">GEN_ZCIENCE Dashboard</p>
-        </div>
+        </motion.div>
+
+        {configError && (
+          <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-3">
+            {configError}
+          </p>
+        )}
+
         <form onSubmit={submit} className="space-y-3">
           <input
             required
@@ -70,7 +117,7 @@ function LoginPage() {
             className="w-full px-4 py-3 rounded-xl bg-[var(--cream)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none"
           />
           <button
-            disabled={busy}
+            disabled={busy || !!configError}
             className="w-full bg-gradient-gold text-[var(--brown-deep)] font-semibold py-3 rounded-xl shadow-gold disabled:opacity-60 inline-flex items-center justify-center gap-2"
           >
             {busy ? <Loader2 className="animate-spin" size={16} /> : <ShieldCheck size={16} />} Sign in
