@@ -103,7 +103,12 @@ function HomePage() {
         <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
           <div className="text-xs uppercase tracking-[0.25em] font-semibold text-[var(--gold)] mb-3">Meet your teacher</div>
           <h2 className="text-4xl font-display font-bold mb-2">{settings?.teacher_name ?? "Geeth Munasingha"}</h2>
-          <div className="text-[var(--brown)] font-mono mb-6">/ {settings?.teacher_short_name ?? "GMS"}</div>
+          <div className="text-[var(--brown)] font-mono mb-3">/ {settings?.teacher_short_name ?? "GMS"}</div>
+          {settings?.teacher_slogan && (
+            <div className="inline-block mb-5 px-4 py-1.5 rounded-full bg-[var(--gold-soft)]/50 border border-[var(--gold)]/30 text-sm font-semibold italic text-[var(--brown-deep)]">
+              “{settings.teacher_slogan}”
+            </div>
+          )}
           <p className="text-[var(--brown)] text-lg leading-relaxed">{settings?.teacher_bio}</p>
           <p className="mt-4 text-[var(--brown)]/80">{settings?.class_description}</p>
         </motion.div>
