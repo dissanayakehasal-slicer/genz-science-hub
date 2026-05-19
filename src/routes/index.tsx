@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getHomeHighlights } from "@/lib/api/public.functions";
 import { ArrowRight, BookOpen, Bell, Trophy, Youtube, Image as ImageIcon, Phone } from "lucide-react";
-import teacherFallback from "@/assets/teacher-placeholder.jpg";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -24,7 +23,7 @@ const quickLinks = [
 ] as const;
 
 function HomePage() {
-  const { data: settings } = useSiteSettings();
+  const { data: settings, isPending: settingsLoading } = useSiteSettings();
   const highlightsFn = useServerFn(getHomeHighlights);
   const { data: highlights } = useQuery({
     queryKey: ["home-highlights"],
@@ -32,7 +31,7 @@ function HomePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const teacherPhoto = settings?.teacher_photo_url ?? teacherFallback;
+  const teacherPhoto = settings?.teacher_photo_url;
 
   return (
     <PublicLayout>
@@ -81,14 +80,21 @@ function HomePage() {
       <section className="max-w-7xl mx-auto px-6 lg:px-8 py-24 grid lg:grid-cols-2 gap-12 items-center">
         <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
           <div className="absolute -inset-4 bg-gradient-gold rounded-3xl blur-2xl opacity-40" />
-          <motion.img
-            whileHover={{ scale: 1.02 }}
-            src={teacherPhoto}
-            alt={settings?.teacher_name ?? "Teacher"}
-            width={768}
-            height={896}
-            className="relative rounded-3xl shadow-elegant border-4 border-[var(--gold)] aspect-[4/5] object-cover w-full"
-          />
+          {teacherPhoto ? (
+            <motion.img
+              whileHover={{ scale: 1.02 }}
+              src={teacherPhoto}
+              alt={settings?.teacher_name ?? "Teacher"}
+              width={768}
+              height={896}
+              className="relative rounded-3xl shadow-elegant border-4 border-[var(--gold)] aspect-[4/5] object-cover w-full"
+            />
+          ) : settingsLoading ? (
+            <motion.div
+              aria-hidden
+              className="relative rounded-3xl border-4 border-[var(--gold)]/40 aspect-[4/5] w-full bg-[var(--cream)] animate-pulse"
+            />
+          ) : null}
           <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-[var(--brown-deep)] text-[var(--gold-soft)] text-xs uppercase tracking-[0.2em] px-5 py-2 rounded-full shadow-gold">
             Your Science Mentor
           </div>

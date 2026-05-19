@@ -52,8 +52,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<RootRouterContext>()({
   beforeLoad: async () => {
-    const session = await fetchAuthSession();
-    return { session, sessionLoading: false };
+    try {
+      const session = await fetchAuthSession();
+      return { session, sessionLoading: false };
+    } catch (error) {
+      console.error("[root] session load failed:", error);
+      return { session: null, sessionLoading: false };
+    }
   },
   head: () => ({
     meta: [

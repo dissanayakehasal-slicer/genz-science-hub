@@ -17,7 +17,7 @@ function ResultsPage() {
   const [lookupExam, setLookupExam] = useState<any>(null);
 
   const examsFn = useServerFn(getPublishedExams);
-  const { data: exams } = useQuery({
+  const { data: exams, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["public-exams"],
     queryFn: () => examsFn(),
   });
@@ -27,7 +27,16 @@ function ResultsPage() {
       <PageHeader title="Exam Results" subtitle="See the latest exams, the public Top 10, and look up your personal result." />
       <section className="max-w-6xl mx-auto px-6 py-12">
         <h2 className="text-2xl font-display font-bold mb-6 flex items-center gap-2"><Calendar className="text-[var(--gold)]"/> Latest Exams</h2>
-        {!exams || exams.length === 0 ? (
+        {isLoading ? (
+          <motion.div className="flex justify-center py-16"><Loader2 className="animate-spin text-[var(--gold)]" size={32} /></motion.div>
+        ) : isError ? (
+          <motion.div className="text-center py-16 max-w-md mx-auto">
+            <p className="text-[var(--brown)]/80 mb-4">Could not load exams. {(error as Error)?.message ?? "Please try again."}</p>
+            <button type="button" onClick={() => refetch()} className="bg-gradient-gold text-[var(--brown-deep)] font-semibold px-5 py-2 rounded-xl shadow-gold">
+              Retry
+            </button>
+          </motion.div>
+        ) : !exams || exams.length === 0 ? (
           <div className="text-center py-16 text-[var(--brown)]/60">No published exams yet.</div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">

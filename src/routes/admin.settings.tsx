@@ -2,21 +2,29 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { saveSiteSettings, uploadFile } from "@/lib/api/admin.functions";
+import { changeMyPassword } from "@/lib/users.functions";
 import { useSiteSettings } from "@/hooks/useSiteData";
+import { useAuth } from "@/hooks/useAuth";
 import { fileToBase64 } from "@/lib/file";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({ component: SettingsAdmin });
 
 function SettingsAdmin() {
   const qc = useQueryClient();
+  const { username } = useAuth();
   const saveFn = useServerFn(saveSiteSettings);
   const uploadFn = useServerFn(uploadFile);
+  const changePwFn = useServerFn(changeMyPassword);
   const { data } = useSiteSettings();
   const [form, setForm] = useState<any>(null);
   const [busy, setBusy] = useState(false);
+  const [pwBusy, setPwBusy] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   useEffect(() => { if (data && !form) setForm(data); }, [data]);
 
   if (!form) return <Loader2 className="animate-spin"/>;
@@ -47,6 +55,28 @@ function SettingsAdmin() {
       toast.error(e.message ?? "Failed");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const updatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    setPwBusy(true);
+    try {
+      await changePwFn({
+        data: { current_password: currentPassword, new_password: newPassword },
+      });
+      toast.success("Password updated. Use your new password next time you sign in.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to update password");
+    } finally {
+      setPwBusy(false);
     }
   };
 
@@ -108,6 +138,67 @@ function SettingsAdmin() {
       <button onClick={save} disabled={busy} className="mt-8 bg-gradient-gold text-[var(--brown-deep)] font-semibold px-6 py-3 rounded-xl shadow-gold inline-flex items-center gap-2 disabled:opacity-60">
         {busy ? <Loader2 className="animate-spin" size={16}/> : <Save size={16}/>} Save Changes
       </button>
+
+      <section className="mt-14 pt-10 border-t border-[var(--border)] max-w-md">
+        <h2 className="text-xl font-display font-bold mb-1 flex items-center gap-2">
+          <KeyRound size={20} className="text-[var(--gold)]" />
+          Account password
+        </h2>
+        <p className="text-sm text-[var(--brown)]/70 mb-5">
+          Signed in as <strong>{username || "admin"}</strong>. Change the password for this login.
+        </p>
+        <form onSubmit={updatePassword} className="space-y-4">
+          <div>
+            <label className="text-xs uppercase tracking-widest text-[var(--brown)]/60 font-semibold mb-1 block">
+              Current password
+            </label>
+            <input
+              type="password"
+              required
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-widest text-[var(--brown)]/60 font-semibold mb-1 block">
+              New password
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-widest text-[var(--brown)]/60 font-semibold mb-1 block">
+              Confirm new password
+            </label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl bg-white border border-[var(--border)] focus:ring-2 focus:ring-[var(--gold)] focus:outline-none"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={pwBusy}
+            className="bg-[var(--brown-deep)] text-[var(--cream)] font-semibold px-6 py-3 rounded-xl inline-flex items-center gap-2 disabled:opacity-60"
+          >
+            {pwBusy ? <Loader2 className="animate-spin" size={16} /> : <KeyRound size={16} />}
+            Update password
+          </button>
+        </form>
+      </section>
     </div>
   );
 }

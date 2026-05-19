@@ -82,11 +82,11 @@ export const getTop10 = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sql = getSql();
     return sql`
-      SELECT r.rank, r.student_name, r.school, r.marks, r.grade
+      SELECT r."rank", r.student_name, r.school, r.marks, r.grade
       FROM results r
       JOIN exams e ON e.id = r.exam_id
       WHERE r.exam_id = ${data.examId}::uuid AND e.is_published = true
-      ORDER BY r.rank ASC NULLS LAST, r.marks DESC
+      ORDER BY r."rank" ASC NULLS LAST, r.marks DESC
       LIMIT 10
     `;
   });
@@ -99,7 +99,7 @@ export const lookupResult = createServerFn({ method: "GET" })
     const sql = getSql();
     const rows = await sql`
       SELECT r.student_name, r.school, r.index_number, e.exam_name, e.subject,
-             r.marks, r.grade, r.rank, r.teacher_comment
+             r.marks, r.grade, r."rank", r.teacher_comment
       FROM results r
       JOIN exams e ON e.id = r.exam_id
       WHERE r.exam_id = ${data.examId}::uuid

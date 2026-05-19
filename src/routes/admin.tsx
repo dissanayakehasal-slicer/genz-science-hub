@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useLocation, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
@@ -33,6 +33,7 @@ const baseNav: Array<{ to: string; label: string; Icon: any; exact?: boolean; su
 
 function AdminLayout() {
   const nav = useNavigate();
+  const location = useLocation();
   const { session, isAdmin, isSuperAdmin, loading } = useAuth();
   const navItems = baseNav.filter((i) => !i.superOnly || isSuperAdmin);
 

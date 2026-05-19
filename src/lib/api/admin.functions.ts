@@ -352,7 +352,7 @@ export const listResults = createServerFn({ method: "GET" })
     const sql = getSql();
     return sql`
       SELECT * FROM results WHERE exam_id = ${data.examId}::uuid
-      ORDER BY rank ASC NULLS LAST, marks DESC
+      ORDER BY "rank" ASC NULLS LAST, marks DESC
     `;
   });
 
@@ -363,10 +363,10 @@ export const recalculateRanks = createServerFn({ method: "POST" })
     const sql = getSql();
     await sql`
       WITH ranked AS (
-        SELECT id, RANK() OVER (ORDER BY marks DESC) AS r
+        SELECT id, RANK() OVER (ORDER BY marks DESC)::int AS rk
         FROM results WHERE exam_id = ${data.examId}::uuid
       )
-      UPDATE results r SET rank = ranked.r::int FROM ranked WHERE r.id = ranked.id
+      UPDATE results SET "rank" = ranked.rk FROM ranked WHERE results.id = ranked.id
     `;
     return { ok: true };
   });

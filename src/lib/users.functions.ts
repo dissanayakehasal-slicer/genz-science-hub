@@ -102,3 +102,43 @@ export const setUserPassword = createServerFn({ method: "POST" })
     await sql`UPDATE app_auth_users SET password_hash = ${password_hash} WHERE id = ${data.user_id}::uuid`;
     return { ok: true };
   });
+
+export const changeMyPassword = createServerFn({ method: "POST" })
+  .middleware([requireAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        current_password: z.string().min(1).max(72),
+        new_password: z.string().min(6).max(72),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const sql = getSql();
+    const rows = await sql`
+      SELECT id, username, password_hash FROM app_auth_users
+      WHERE id = ${context.userId}::uuid
+      LIMIT 1
+    `;
+    const user = rows[0] as { id: string; username: string; password_hash: string } | undefined;
+
+    if (!user) {
+      throw new Error(
+        "No database login found for this account. Ask a super admin to reset your password under Admin Users."
+      );
+    }
+
+    const valid = await bcrypt.compare(data.current_password, user.password_hash);
+    if (!valid) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const same = await bcrypt.compare(data.new_password, user.password_hash);
+    if (same) {
+      throw new Error("New password must be different from your current password");
+    }
+
+    const password_hash = await bcrypt.hash(data.new_password, 12);
+    await sql`UPDATE app_auth_users SET password_hash = ${password_hash} WHERE id = ${context.userId}::uuid`;
+    return { ok: true };
+  });
