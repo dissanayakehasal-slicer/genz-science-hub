@@ -80,7 +80,8 @@ function Top10Modal({ exam, onClose }: { exam: any; onClose: () => void }) {
               </div>
               <div className="flex-1">
                 <div className="font-semibold">{r.student_name}</div>
-                {r.grade && <div className="text-xs text-[var(--brown)]/60">Grade: {r.grade}</div>}
+                {r.school && <div className="text-xs text-[var(--brown)]/70">{r.school}</div>}
+                {r.grade && <div className="text-[10px] text-[var(--brown)]/50">Grade: {r.grade}</div>}
               </div>
               <div className="font-display font-bold text-lg">{Number(r.marks).toFixed(0)}</div>
             </motion.div>
@@ -119,6 +120,7 @@ function LookupModal({ exam, onClose }: { exam: any; onClose: () => void }) {
             <div>
               <div className="text-xs uppercase tracking-widest opacity-70">Student</div>
               <div className="font-display font-bold text-xl">{data.student_name}</div>
+              {data.school && <div className="text-xs opacity-80">{data.school}</div>}
               <div className="text-xs opacity-70">#{data.index_number}</div>
             </div>
             <Award className="text-[var(--gold-soft)]" size={36}/>
