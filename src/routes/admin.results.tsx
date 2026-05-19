@@ -8,7 +8,7 @@ import { Loader2, Plus, Trash2, Pencil, X, Upload, Eye, EyeOff, Trophy } from "l
 export const Route = createFileRoute("/admin/results")({ component: ResultsAdmin });
 
 type Exam = { id: string; exam_name: string; exam_date: string | null; class_name: string | null; subject: string | null; description: string | null; is_published: boolean };
-type Result = { id: string; exam_id: string; student_name: string; index_number: string; marks: number; grade: string | null; rank: number | null; teacher_comment: string | null };
+type Result = { id: string; exam_id: string; student_name: string; school: string | null; index_number: string; marks: number; grade: string | null; rank: number | null; teacher_comment: string | null };
 
 function ResultsAdmin() {
   const qc = useQueryClient();
@@ -83,7 +83,7 @@ function ResultsTable({ examId }: { examId: string }) {
 
   const add = async () => {
     if (!form.student_name || !form.index_number || form.marks === undefined) return toast.error("Name, index & marks required");
-    const { error } = await supabase.from("results").insert({ exam_id: examId, student_name: form.student_name, index_number: form.index_number, marks: Number(form.marks), grade: form.grade ?? null, teacher_comment: form.teacher_comment ?? null });
+    const { error } = await supabase.from("results").insert({ exam_id: examId, student_name: form.student_name, index_number: form.index_number, school: form.school ?? null, marks: Number(form.marks), grade: form.grade ?? null, teacher_comment: form.teacher_comment ?? null });
     if (error) return toast.error(error.message);
     setForm({}); await refresh(); toast.success("Added");
   };
@@ -93,8 +93,8 @@ function ResultsTable({ examId }: { examId: string }) {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
     const rows = lines.slice(1).map((l) => {
-      const [student_name, index_number, marks, grade, teacher_comment] = l.split(",").map((s) => s.trim());
-      return { exam_id: examId, student_name, index_number, marks: Number(marks), grade: grade || null, teacher_comment: teacher_comment || null };
+      const [index_number, school, grade, student_name, marks, teacher_comment] = l.split(",").map((s) => s.trim());
+      return { exam_id: examId, student_name, index_number, school: school || null, grade: grade || null, marks: Number(marks), teacher_comment: teacher_comment || null };
     }).filter((r) => r.student_name && r.index_number && !isNaN(r.marks));
     if (!rows.length) return toast.error("No valid rows");
     const { error } = await supabase.from("results").insert(rows);
@@ -104,26 +104,26 @@ function ResultsTable({ examId }: { examId: string }) {
 
   return (
     <div className="border-t border-[var(--border)] p-4 bg-[var(--cream)]/40">
-      <div className="grid md:grid-cols-6 gap-2 mb-3">
-        <input className="input" placeholder="Student name" value={form.student_name ?? ""} onChange={(e) => setForm({ ...form, student_name: e.target.value })}/>
+      <div className="grid md:grid-cols-7 gap-2 mb-3">
         <input className="input" placeholder="Index #" value={form.index_number ?? ""} onChange={(e) => setForm({ ...form, index_number: e.target.value })}/>
-        <input type="number" className="input" placeholder="Marks" value={form.marks ?? ""} onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })}/>
+        <input className="input" placeholder="School" value={form.school ?? ""} onChange={(e) => setForm({ ...form, school: e.target.value })}/>
         <input className="input" placeholder="Grade" value={form.grade ?? ""} onChange={(e) => setForm({ ...form, grade: e.target.value })}/>
-        <input className="input md:col-span-1" placeholder="Comment" value={form.teacher_comment ?? ""} onChange={(e) => setForm({ ...form, teacher_comment: e.target.value })}/>
+        <input className="input md:col-span-2" placeholder="Student name" value={form.student_name ?? ""} onChange={(e) => setForm({ ...form, student_name: e.target.value })}/>
+        <input type="number" className="input" placeholder="Marks" value={form.marks ?? ""} onChange={(e) => setForm({ ...form, marks: Number(e.target.value) })}/>
         <button onClick={add} className="bg-gradient-gold text-[var(--brown-deep)] font-semibold rounded-xl">Add</button>
       </div>
       <label className="inline-flex items-center gap-2 text-xs cursor-pointer mb-3 px-3 py-2 rounded-full bg-white border border-[var(--border)]">
-        <Upload size={12}/> Import CSV (name,index,marks,grade,comment)
+        <Upload size={12}/> Import CSV (index,school,grade,name,marks,comment)
         <input type="file" accept=".csv" className="hidden" onChange={(e) => e.target.files?.[0] && csvUpload(e.target.files[0])}/>
       </label>
       {isLoading ? <Loader2 className="animate-spin"/> : (
         <table className="w-full text-sm bg-white rounded-xl overflow-hidden">
-          <thead className="bg-[var(--cream)]"><tr className="text-left"><th className="px-3 py-2">Rank</th><th className="px-3 py-2">Name</th><th className="px-3 py-2">Index</th><th className="px-3 py-2">Marks</th><th className="px-3 py-2">Grade</th><th className="px-3 py-2"></th></tr></thead>
+          <thead className="bg-[var(--cream)]"><tr className="text-left"><th className="px-3 py-2">Rank</th><th className="px-3 py-2">Index</th><th className="px-3 py-2">School</th><th className="px-3 py-2">Grade</th><th className="px-3 py-2">Name</th><th className="px-3 py-2">Marks</th><th className="px-3 py-2"></th></tr></thead>
           <tbody>
             {(data as Result[] | undefined)?.map((r) => (
-              <tr key={r.id} className="border-t border-[var(--border)]"><td className="px-3 py-2 font-bold">{r.rank ?? "-"}</td><td className="px-3 py-2">{r.student_name}</td><td className="px-3 py-2 font-mono text-xs">{r.index_number}</td><td className="px-3 py-2">{r.marks}</td><td className="px-3 py-2">{r.grade ?? "-"}</td><td className="px-3 py-2 text-right"><button onClick={() => remove(r.id)} className="text-xs text-red-600"><Trash2 size={12}/></button></td></tr>
+              <tr key={r.id} className="border-t border-[var(--border)]"><td className="px-3 py-2 font-bold">{r.rank ?? "-"}</td><td className="px-3 py-2 font-mono text-xs">{r.index_number}</td><td className="px-3 py-2">{r.school ?? "-"}</td><td className="px-3 py-2">{r.grade ?? "-"}</td><td className="px-3 py-2">{r.student_name}</td><td className="px-3 py-2">{r.marks}</td><td className="px-3 py-2 text-right"><button onClick={() => remove(r.id)} className="text-xs text-red-600"><Trash2 size={12}/></button></td></tr>
             ))}
-            {data?.length === 0 && <tr><td colSpan={6} className="text-center py-6 text-[var(--brown)]/60">No results yet.</td></tr>}
+            {data?.length === 0 && <tr><td colSpan={7} className="text-center py-6 text-[var(--brown)]/60">No results yet.</td></tr>}
           </tbody>
         </table>
       )}
