@@ -281,6 +281,7 @@ export type Database = {
           index_number: string
           marks: number
           rank: number | null
+          school: string | null
           student_name: string
           teacher_comment: string | null
           updated_at: string
@@ -293,6 +294,7 @@ export type Database = {
           index_number: string
           marks?: number
           rank?: number | null
+          school?: string | null
           student_name: string
           teacher_comment?: string | null
           updated_at?: string
@@ -305,6 +307,7 @@ export type Database = {
           index_number?: string
           marks?: number
           rank?: number | null
+          school?: string | null
           student_name?: string
           teacher_comment?: string | null
           updated_at?: string
@@ -527,6 +530,7 @@ export type Database = {
           grade: string
           marks: number
           rank: number
+          school: string
           student_name: string
         }[]
       }
@@ -547,6 +551,7 @@ export type Database = {
           index_number: string
           marks: number
           rank: number
+          school: string
           student_name: string
           subject: string
           teacher_comment: string
