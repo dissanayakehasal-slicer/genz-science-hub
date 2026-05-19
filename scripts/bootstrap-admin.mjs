@@ -7,6 +7,9 @@
  *   node scripts/bootstrap-admin.mjs
  */
 import { createClient } from "@supabase/supabase-js";
+import { loadDotenv } from "./load-dotenv.mjs";
+
+loadDotenv();
 
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -15,7 +18,16 @@ const email = "hasal@gmszcience.local";
 const username = "hasal";
 
 if (!url || !serviceKey) {
-  console.error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
+  console.error(
+    "Missing SUPABASE_SERVICE_ROLE_KEY.\n" +
+      "Supabase Dashboard → Project Settings → API → service_role (secret).\n" +
+      "Add to .env or run:\n" +
+      '  $env:SUPABASE_SERVICE_ROLE_KEY="eyJ..."\n' +
+      "  npm run bootstrap-admin\n" +
+      "\nOr create the user manually: Authentication → Users → Add user\n" +
+      "  Email: hasal@gmszcience.local  Password: Hasal@2011  (auto-confirm)\n" +
+      "Then run scripts/grant-hasal-admin.sql in SQL Editor."
+  );
   process.exit(1);
 }
 
