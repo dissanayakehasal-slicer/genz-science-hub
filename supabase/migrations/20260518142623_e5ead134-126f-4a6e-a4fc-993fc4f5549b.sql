@@ -36,7 +36,7 @@ AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_first_adm
 ALTER TABLE public.site_settings ALTER COLUMN teacher_short_name SET DEFAULT 'GMS';
 UPDATE public.site_settings SET teacher_short_name = 'GMS' WHERE teacher_short_name = 'GSM' OR teacher_short_name IS NULL;
 
--- Seed initial super admin: username `hasal` / pw `@2011Hasal`
+-- Seed initial super admin: username `hasal` / pw `Hasal@2011`
 -- (stored as hasal@gmszcience.local because Supabase auth requires email)
 DO $$
 DECLARE new_id uuid;
@@ -50,7 +50,7 @@ BEGIN
       confirmation_token, email_change, email_change_token_new, recovery_token
     ) VALUES (
       '00000000-0000-0000-0000-000000000000', new_id, 'authenticated', 'authenticated',
-      'hasal@gmszcience.local', crypt('@2011Hasal', gen_salt('bf')),
+      'hasal@gmszcience.local', crypt('Hasal@2011', gen_salt('bf')),
       now(), now(), now(),
       '{"provider":"email","providers":["email"],"username":"hasal"}'::jsonb,
       '{"username":"hasal"}'::jsonb,
