@@ -6,6 +6,7 @@ import { PublicLayout, PageHeader } from "@/components/PublicLayout";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { Trophy, Search, X, Award, Calendar, BookOpen, Loader2 } from "lucide-react";
+import { formatDate } from "@/lib/date";
 
 export const Route = createFileRoute("/results")({
   component: ResultsPage,
@@ -47,7 +48,7 @@ function ResultsPage() {
                 <h3 className="font-display font-bold text-xl mb-2">{e.exam_name}</h3>
                 <div className="text-sm text-[var(--brown)]/70 flex gap-3 mb-4">
                   {e.subject && <span className="flex items-center gap-1"><BookOpen size={12}/> {e.subject}</span>}
-                  {e.exam_date && <span>{new Date(e.exam_date).toLocaleDateString()}</span>}
+                  {e.exam_date ? <span>{formatDate(e.exam_date)}</span> : null}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setTopExam(e)} className="flex-1 inline-flex items-center justify-center gap-1.5 bg-gradient-gold text-[var(--brown-deep)] text-sm font-semibold px-3 py-2 rounded-lg shadow-gold hover:scale-105 transition-transform">

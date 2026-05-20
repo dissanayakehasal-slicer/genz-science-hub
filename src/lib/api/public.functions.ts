@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getSql } from "@/lib/db";
+import { serializeExamRow } from "@/lib/date";
 
 export const getSiteSettings = createServerFn({ method: "GET" }).handler(async () => {
   const sql = getSql();
@@ -74,7 +75,8 @@ export const getYoutubeLessons = createServerFn({ method: "GET" }).handler(async
 
 export const getPublishedExams = createServerFn({ method: "GET" }).handler(async () => {
   const sql = getSql();
-  return sql`SELECT * FROM exams WHERE is_published = true ORDER BY exam_date DESC NULLS LAST`;
+  const rows = await sql`SELECT * FROM exams WHERE is_published = true ORDER BY exam_date DESC NULLS LAST`;
+  return (rows as Record<string, unknown>[]).map(serializeExamRow);
 });
 
 export const getTop10 = createServerFn({ method: "GET" })

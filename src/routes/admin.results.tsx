@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, X, Upload, Eye, EyeOff, Trophy } from "lucide-react";
+import { formatDate, formatDateInput } from "@/lib/date";
 
 export const Route = createFileRoute("/admin/results")({ component: ResultsAdmin });
 
@@ -87,7 +88,7 @@ function ResultsAdmin() {
           <div className="flex justify-between mb-4"><h3 className="font-display font-bold">{examEdit.id ? "Edit" : "New"} Exam</h3><button onClick={() => setExamEdit(null)}><X size={18}/></button></div>
           <div className="grid md:grid-cols-2 gap-3">
             <input className="input md:col-span-2" placeholder="Exam name" value={examEdit.exam_name ?? ""} onChange={(e) => setExamEdit({ ...examEdit, exam_name: e.target.value })}/>
-            <input type="date" className="input" value={examEdit.exam_date ?? ""} onChange={(e) => setExamEdit({ ...examEdit, exam_date: e.target.value })}/>
+            <input type="date" className="input" value={formatDateInput(examEdit.exam_date)} onChange={(e) => setExamEdit({ ...examEdit, exam_date: e.target.value })}/>
             <input className="input" placeholder="Class" value={examEdit.class_name ?? ""} onChange={(e) => setExamEdit({ ...examEdit, class_name: e.target.value })}/>
             <input className="input" placeholder="Subject" value={examEdit.subject ?? ""} onChange={(e) => setExamEdit({ ...examEdit, subject: e.target.value })}/>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!examEdit.is_published} onChange={(e) => setExamEdit({ ...examEdit, is_published: e.target.checked })}/> Published</label>
@@ -103,11 +104,25 @@ function ResultsAdmin() {
             <div className="p-4 flex items-center justify-between gap-3">
               <div className="flex-1">
                 <div className="font-semibold flex items-center gap-2"><Trophy size={14} className="text-[var(--gold)]"/> {e.exam_name}</div>
-                <div className="text-xs text-[var(--brown)]/60">{e.exam_date ?? "no date"} · {e.subject ?? ""} · {e.class_name ?? ""}</div>
+                <div className="text-xs text-[var(--brown)]/60">
+                  {formatDate(e.exam_date, "no date")}
+                  {e.subject ? ` · ${e.subject}` : ""}
+                  {e.class_name ? ` · ${e.class_name}` : ""}
+                </div>
               </div>
               <button onClick={() => togglePublish(e)} className={`text-xs px-3 py-1.5 rounded-full ${e.is_published ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"} inline-flex items-center gap-1`}>{e.is_published ? <Eye size={12}/> : <EyeOff size={12}/>}{e.is_published ? "published" : "draft"}</button>
               <button onClick={() => setOpenExam(openExam === e.id ? null : e.id)} className="text-xs px-3 py-1.5 rounded-full bg-[var(--cream)] hover:bg-[var(--gold-soft)]/40">{openExam === e.id ? "close" : "manage results"}</button>
-              <button onClick={() => setExamEdit(e)} className="text-xs px-2 py-1 rounded-lg bg-[var(--cream)]"><Pencil size={12}/></button>
+              <button
+                onClick={() =>
+                  setExamEdit({
+                    ...e,
+                    exam_date: e.exam_date ? formatDateInput(e.exam_date) : null,
+                  })
+                }
+                className="text-xs px-2 py-1 rounded-lg bg-[var(--cream)]"
+              >
+                <Pencil size={12} />
+              </button>
               <button onClick={() => removeExam(e.id)} className="text-xs px-2 py-1 rounded-lg bg-red-50 text-red-700"><Trash2 size={12}/></button>
             </div>
             {openExam === e.id && <ResultsTable examId={e.id} />}

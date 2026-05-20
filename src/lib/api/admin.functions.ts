@@ -4,6 +4,7 @@ import { getSql } from "@/lib/db";
 import { uploadPublicFile, type StorageFolder } from "@/lib/storage";
 import { requireAuth } from "@/lib/auth-middleware";
 import { extractYouTubeId } from "@/lib/youtube";
+import { serializeExamRow } from "@/lib/date";
 
 const auth = [requireAuth];
 
@@ -287,7 +288,8 @@ export const listExams = createServerFn({ method: "GET" })
   .middleware(auth)
   .handler(async () => {
     const sql = getSql();
-    return sql`SELECT * FROM exams ORDER BY exam_date DESC NULLS LAST`;
+    const rows = await sql`SELECT * FROM exams ORDER BY exam_date DESC NULLS LAST`;
+    return (rows as Record<string, unknown>[]).map(serializeExamRow);
   });
 
 export const saveExam = createServerFn({ method: "POST" })
