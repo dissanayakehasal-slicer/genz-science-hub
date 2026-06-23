@@ -6,7 +6,8 @@ import { Loader2, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: ({ context }) => {
-    if (context.session?.user) {
+    const roles = context.session?.user?.roles ?? [];
+    if (context.session?.user && (roles.includes("admin") || roles.includes("super_admin"))) {
       throw redirect({ to: "/admin" });
     }
   },

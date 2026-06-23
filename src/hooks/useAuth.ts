@@ -5,7 +5,7 @@ type AuthSession = Session & {
   user: {
     id: string;
     name: string;
-    roles: Array<"admin" | "super_admin">;
+    roles: Array<"admin" | "super_admin" | "student">;
   };
 };
 
@@ -18,6 +18,7 @@ export function useAuth() {
   const roles = session?.user?.roles ?? [];
   const isAdmin = roles.includes("admin") || roles.includes("super_admin");
   const isSuperAdmin = roles.includes("super_admin");
+  const isStudent = roles.includes("student");
 
   return {
     session,
@@ -25,6 +26,7 @@ export function useAuth() {
     roles,
     isAdmin,
     isSuperAdmin,
+    isStudent,
     username: session?.user?.name ?? "",
     loading: sessionLoading,
   };

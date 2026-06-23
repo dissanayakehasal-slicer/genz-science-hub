@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useLocation, redirect } fro
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Bell, FileText, Youtube, Image, Trophy, Tags, Settings, Phone, LogOut, Loader2, Users } from "lucide-react";
+import { LayoutDashboard, Bell, FileText, Youtube, Image, Trophy, Tags, Settings, Phone, LogOut, Loader2, Users, Video } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { toast } from "sonner";
 
@@ -22,6 +22,7 @@ const baseNav: Array<{ to: string; label: string; Icon: any; exact?: boolean; su
   { to: "/admin/notices", label: "Notices", Icon: Bell },
   { to: "/admin/notes", label: "Notes", Icon: FileText },
   { to: "/admin/youtube", label: "YouTube", Icon: Youtube },
+  { to: "/admin/classes", label: "Online Classes", Icon: Video },
   { to: "/admin/gallery", label: "Gallery", Icon: Image },
   { to: "/admin/results", label: "Results", Icon: Trophy },
   { to: "/admin/categories", label: "Categories", Icon: Tags },

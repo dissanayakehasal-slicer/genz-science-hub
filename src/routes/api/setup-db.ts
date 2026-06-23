@@ -3,6 +3,7 @@ import { Pool } from "@neondatabase/serverless";
 import bcrypt from "bcryptjs";
 import { getDatabaseUrl, getSql } from "@/lib/db";
 import schemaSql from "../../../vercel/schema.sql?raw";
+import onlineClassesSql from "../../../vercel/migrations/001_online_classes.sql?raw";
 
 export const Route = createFileRoute("/api/setup-db")({
   server: {
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/api/setup-db")({
           const pool = new Pool({ connectionString: url });
           try {
             await pool.query(schemaSql);
+            await pool.query(onlineClassesSql);
           } finally {
             await pool.end();
           }
@@ -50,7 +52,7 @@ export const Route = createFileRoute("/api/setup-db")({
             ON CONFLICT DO NOTHING
           `;
 
-          return Response.json({ ok: true, message: "Schema applied and hasal admin ready" });
+          return Response.json({ ok: true, message: "Schema applied, online classes migrated, hasal admin ready" });
         } catch (error) {
           console.error("[setup-db]", error);
           const message = error instanceof Error ? error.message : "Setup failed";

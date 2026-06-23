@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "bootstrap-admin": "node scripts/bootstrap-admin.mjs",
-    "setup-db": "node scripts/setup-vercel-db.mjs"
+    "setup-db": "node scripts/setup-vercel-db.mjs",
+    "migrate-online-classes": "node scripts/migrate-online-classes.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.41.2",

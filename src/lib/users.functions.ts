@@ -50,7 +50,12 @@ export const listAdminUsers = createServerFn({ method: "GET" })
       grouped.get(r.user_id)!.roles.push(r.role);
     }
 
-    return { users: Array.from(grouped.values()), me: { userId, roles } };
+    return {
+      users: Array.from(grouped.values()).filter((u) =>
+        u.roles.some((r) => r === "admin" || r === "super_admin")
+      ),
+      me: { userId, roles },
+    };
   });
 
 export const createAdminUser = createServerFn({ method: "POST" })

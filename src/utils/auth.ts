@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import type { StartAuthJSConfig } from "start-authjs";
 import { getSql } from "@/lib/db";
 
-export type AppRole = "admin" | "super_admin";
+export type AppRole = "admin" | "super_admin" | "student";
 
 declare module "@auth/core/types" {
   interface User {
@@ -37,7 +37,7 @@ async function loadRoles(userId: string): Promise<AppRole[]> {
   `;
   return rows
     .map((r) => (r as { role: string }).role as AppRole)
-    .filter((r) => r === "admin" || r === "super_admin");
+    .filter((r) => r === "admin" || r === "super_admin" || r === "student");
 }
 
 async function authorizeFromDatabase(username: string, password: string) {
@@ -53,7 +53,7 @@ async function authorizeFromDatabase(username: string, password: string) {
   if (!valid) return null;
 
   const roles = await loadRoles(user.id);
-  if (!roles.includes("admin") && !roles.includes("super_admin")) return null;
+  if (!roles.length) return null;
 
   return { id: user.id, name: user.username, roles };
 }

@@ -16,9 +16,13 @@ import { Route as NotesRouteImport } from './routes/notes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as StudentLoginRouteImport } from './routes/student.login'
+import { Route as ClassesVideoIdRouteImport } from './routes/classes.$videoId'
 import { Route as ApiSetupDbRouteImport } from './routes/api/setup-db'
 import { Route as AdminYoutubeRouteImport } from './routes/admin.youtube'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -28,6 +32,7 @@ import { Route as AdminNoticesRouteImport } from './routes/admin.notices'
 import { Route as AdminNotesRouteImport } from './routes/admin.notes'
 import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminContactRouteImport } from './routes/admin.contact'
+import { Route as AdminClassesRouteImport } from './routes/admin.classes'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
@@ -66,6 +71,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -76,10 +86,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassesIndexRoute = ClassesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ClassesRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const StudentLoginRoute = StudentLoginRouteImport.update({
+  id: '/student/login',
+  path: '/student/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesVideoIdRoute = ClassesVideoIdRouteImport.update({
+  id: '/$videoId',
+  path: '/$videoId',
+  getParentRoute: () => ClassesRoute,
 } as any)
 const ApiSetupDbRoute = ApiSetupDbRouteImport.update({
   id: '/api/setup-db',
@@ -126,6 +151,11 @@ const AdminContactRoute = AdminContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminClassesRoute = AdminClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
@@ -140,6 +170,7 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/classes': typeof ClassesRouteWithChildren
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/login': typeof LoginRoute
@@ -148,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/results': typeof ResultsRoute
   '/youtube': typeof YoutubeRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/classes': typeof AdminClassesRoute
   '/admin/contact': typeof AdminContactRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/notes': typeof AdminNotesRoute
@@ -157,7 +189,10 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
   '/api/setup-db': typeof ApiSetupDbRoute
+  '/classes/$videoId': typeof ClassesVideoIdRoute
+  '/student/login': typeof StudentLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/classes/': typeof ClassesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -170,6 +205,7 @@ export interface FileRoutesByTo {
   '/results': typeof ResultsRoute
   '/youtube': typeof YoutubeRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/classes': typeof AdminClassesRoute
   '/admin/contact': typeof AdminContactRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/notes': typeof AdminNotesRoute
@@ -179,13 +215,17 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
   '/api/setup-db': typeof ApiSetupDbRoute
+  '/classes/$videoId': typeof ClassesVideoIdRoute
+  '/student/login': typeof StudentLoginRoute
   '/admin': typeof AdminIndexRoute
+  '/classes': typeof ClassesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/classes': typeof ClassesRouteWithChildren
   '/contact': typeof ContactRoute
   '/gallery': typeof GalleryRoute
   '/login': typeof LoginRoute
@@ -194,6 +234,7 @@ export interface FileRoutesById {
   '/results': typeof ResultsRoute
   '/youtube': typeof YoutubeRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/classes': typeof AdminClassesRoute
   '/admin/contact': typeof AdminContactRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/notes': typeof AdminNotesRoute
@@ -203,7 +244,10 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/youtube': typeof AdminYoutubeRoute
   '/api/setup-db': typeof ApiSetupDbRoute
+  '/classes/$videoId': typeof ClassesVideoIdRoute
+  '/student/login': typeof StudentLoginRoute
   '/admin/': typeof AdminIndexRoute
+  '/classes/': typeof ClassesIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -211,6 +255,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/classes'
     | '/contact'
     | '/gallery'
     | '/login'
@@ -219,6 +264,7 @@ export interface FileRouteTypes {
     | '/results'
     | '/youtube'
     | '/admin/categories'
+    | '/admin/classes'
     | '/admin/contact'
     | '/admin/gallery'
     | '/admin/notes'
@@ -228,7 +274,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/youtube'
     | '/api/setup-db'
+    | '/classes/$videoId'
+    | '/student/login'
     | '/admin/'
+    | '/classes/'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -241,6 +290,7 @@ export interface FileRouteTypes {
     | '/results'
     | '/youtube'
     | '/admin/categories'
+    | '/admin/classes'
     | '/admin/contact'
     | '/admin/gallery'
     | '/admin/notes'
@@ -250,12 +300,16 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/youtube'
     | '/api/setup-db'
+    | '/classes/$videoId'
+    | '/student/login'
     | '/admin'
+    | '/classes'
     | '/api/auth/$'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/classes'
     | '/contact'
     | '/gallery'
     | '/login'
@@ -264,6 +318,7 @@ export interface FileRouteTypes {
     | '/results'
     | '/youtube'
     | '/admin/categories'
+    | '/admin/classes'
     | '/admin/contact'
     | '/admin/gallery'
     | '/admin/notes'
@@ -273,13 +328,17 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/youtube'
     | '/api/setup-db'
+    | '/classes/$videoId'
+    | '/student/login'
     | '/admin/'
+    | '/classes/'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  ClassesRoute: typeof ClassesRouteWithChildren
   ContactRoute: typeof ContactRoute
   GalleryRoute: typeof GalleryRoute
   LoginRoute: typeof LoginRoute
@@ -288,6 +347,7 @@ export interface RootRouteChildren {
   ResultsRoute: typeof ResultsRoute
   YoutubeRoute: typeof YoutubeRoute
   ApiSetupDbRoute: typeof ApiSetupDbRoute
+  StudentLoginRoute: typeof StudentLoginRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -342,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -356,12 +423,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/classes/': {
+      id: '/classes/'
+      path: '/'
+      fullPath: '/classes/'
+      preLoaderRoute: typeof ClassesIndexRouteImport
+      parentRoute: typeof ClassesRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/student/login': {
+      id: '/student/login'
+      path: '/student/login'
+      fullPath: '/student/login'
+      preLoaderRoute: typeof StudentLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes/$videoId': {
+      id: '/classes/$videoId'
+      path: '/$videoId'
+      fullPath: '/classes/$videoId'
+      preLoaderRoute: typeof ClassesVideoIdRouteImport
+      parentRoute: typeof ClassesRoute
     }
     '/api/setup-db': {
       id: '/api/setup-db'
@@ -426,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminContactRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/classes': {
+      id: '/admin/classes'
+      path: '/classes'
+      fullPath: '/admin/classes'
+      preLoaderRoute: typeof AdminClassesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/categories': {
       id: '/admin/categories'
       path: '/categories'
@@ -445,6 +540,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminClassesRoute: typeof AdminClassesRoute
   AdminContactRoute: typeof AdminContactRoute
   AdminGalleryRoute: typeof AdminGalleryRoute
   AdminNotesRoute: typeof AdminNotesRoute
@@ -458,6 +554,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminClassesRoute: AdminClassesRoute,
   AdminContactRoute: AdminContactRoute,
   AdminGalleryRoute: AdminGalleryRoute,
   AdminNotesRoute: AdminNotesRoute,
@@ -471,9 +568,23 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface ClassesRouteChildren {
+  ClassesVideoIdRoute: typeof ClassesVideoIdRoute
+  ClassesIndexRoute: typeof ClassesIndexRoute
+}
+
+const ClassesRouteChildren: ClassesRouteChildren = {
+  ClassesVideoIdRoute: ClassesVideoIdRoute,
+  ClassesIndexRoute: ClassesIndexRoute,
+}
+
+const ClassesRouteWithChildren =
+  ClassesRoute._addFileChildren(ClassesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  ClassesRoute: ClassesRouteWithChildren,
   ContactRoute: ContactRoute,
   GalleryRoute: GalleryRoute,
   LoginRoute: LoginRoute,
@@ -482,6 +593,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResultsRoute: ResultsRoute,
   YoutubeRoute: YoutubeRoute,
   ApiSetupDbRoute: ApiSetupDbRoute,
+  StudentLoginRoute: StudentLoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
