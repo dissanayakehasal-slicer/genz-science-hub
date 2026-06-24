@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://geethmunasinghe.lk/$1",
+      "permanent": true
+    }
+  ]
+}
